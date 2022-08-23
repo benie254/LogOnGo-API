@@ -6,6 +6,9 @@ class MyUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = ('id','username','email','first_name','last_name','petrol_station')
+        extra_kwargs = {
+            'password':{'write_only':True}
+        }     
 
 class FuelSerializer(serializers.ModelSerializer):
     class Meta:
