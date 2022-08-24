@@ -96,10 +96,9 @@ EMAIL_PORT = config('EMAIL_PORT')
 
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
-    # 'http://localhost:8000',
-    '.localhost',
-    '.herokuapp.com',
-    '127.0.0.1',
+    'http://localhost:8000',
+    'http://localhost:4200',
+    'http://logongo.herokuapp.com',
 )
 
 MIDDLEWARE = [
