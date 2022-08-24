@@ -23,7 +23,7 @@ class LogSerializer(serializers.ModelSerializer):
 class LogMpesaSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogMpesa 
-        fields = ('date','transaction_number','customer_naame','customer_phone_number','amount','amount_transferred_to_bank','daily_total','cumulative_amount','first_logged','last_edited','user','logged_by',)
+        fields = ('date','transaction_number','customer_name','customer_phone_number','amount','amount_transferred_to_bank','daily_total','cumulative_amount','first_logged','last_edited','user','logged_by',)
 
 class FuelReceivedSerializer(serializers.ModelSerializer):
     class Meta:

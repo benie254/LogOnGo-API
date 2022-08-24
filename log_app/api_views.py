@@ -46,7 +46,7 @@ class RegisteredFuels(APIView):
         return Response(serializers.data)
 
 class GasInfo(APIView):
-    def get_gas_info(self,fuel_id):
+    def get_gas_info(self):
         try:
             return Fuel.objects.all().filter(id=3).last()
         except Fuel.DoesNotExist:
@@ -58,7 +58,7 @@ class GasInfo(APIView):
         return Response(serializers.data)
 
 class DieselInfo(APIView):
-    def get_diesel_info(self,fuel_id):
+    def get_diesel_info(self):
         try:
             return Fuel.objects.all().filter(id=1).last()
         except Fuel.DoesNotExist:
@@ -70,7 +70,7 @@ class DieselInfo(APIView):
         return Response(serializers.data)
 
 class PetrolInfo(APIView):
-    def get_petrol_info(self,fuel_id):
+    def get_petrol_info(self):
         try:
             return Fuel.objects.all().filter(id=2).last()
         except Fuel.DoesNotExist:
@@ -289,42 +289,48 @@ class TodayGasLogsFour(APIView):
 
 class YesterdayDieselLogs(APIView):
     def get_yesterday_diesel_logs(self):
-        yesterday = yesterday - dt.timedelta(days=1)
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
         try:
             return Log.objects.all().filter(date=yesterday).filter(fuel_id=1).first()
         except Log.DoesNotExist:
             return Http404
 
     def get(self, request, format=None):
-        yesterday = yesterday - dt.timedelta(days=1)
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
         yesterday_diesel_logs = Log.objects.all().filter(date=yesterday).filter(fuel_id=1).first()
         serializers = LogSerializer(yesterday_diesel_logs,many=False)
         return Response(serializers.data)
 
 class YesterdayPetrolLogs(APIView):
     def get_yesterday_petrol_logs(self):
-        yesterday = yesterday - dt.timedelta(days=1)
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
         try:
             return Log.objects.all().filter(date=yesterday).filter(fuel_id=2).first()
         except Log.DoesNotExist:
             return Http404
 
     def get(self, request, format=None):
-        yesterday = yesterday - dt.timedelta(days=1)
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
         yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).filter(fuel_id=2).first()
         serializers = LogSerializer(yesterday_petrol_logs,many=False)
         return Response(serializers.data)
 
 class YesterdayGasLogs(APIView):
     def get_yesterday_gas_logs(self):
-        yesterday = yesterday - dt.timedelta(days=1)
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
         try:
             return Log.objects.all().filter(date=yesterday).filter(fuel_id=3).first()
         except Log.DoesNotExist:
             return Http404
 
     def get(self, request, format=None):
-        yesterday = yesterday - dt.timedelta(days=1)
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
         yesterday_gas_logs = Log.objects.all().filter(date=yesterday).filter(fuel_id=3).first()
         serializers = LogSerializer(yesterday_gas_logs,many=False)
         return Response(serializers.data)
@@ -367,7 +373,7 @@ class UserMpesaLogs(APIView):
         serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
         return Response(serializers.data)
 
-class MpesaTotal(APIView):
+class MpesaCumulative(APIView):
     def get_mpesa_total(self):
         try:
             return LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
@@ -528,7 +534,7 @@ class MpesaLogDetails(APIView):
         serializers = LogMpesaSerializer(mpesa_details,many=False)
         return Response(serializers.data)
 
-class PasLogs(APIView):
+class PastLogs(APIView):
     def get_past_logs(self,past_date):
         try:
             date = dt.datetime.strptime(past_date, '%Y-%m-%d').date()
