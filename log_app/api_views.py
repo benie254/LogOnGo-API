@@ -57,6 +57,15 @@ class GasInfo(APIView):
         serializers = FuelSerializer(gas_info,many=False)
         return Response(serializers.data)
 
+    def put(sel, request, format=None):
+        gas_info = Fuel.objects.all().filter(id=3).last()
+        serializers = FuelSerializer(gas_info,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class DieselInfo(APIView):
     def get_diesel_info(self):
         try:
