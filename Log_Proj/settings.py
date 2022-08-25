@@ -70,6 +70,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'corsheaders',
+    'bootstrap5',
 ]
 
 REGISTRATION_OPEN = True 
