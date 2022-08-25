@@ -1,0 +1,173 @@
+{%load bootstrap5%} 
+{%load static%} 
+
+
+<!DOCTYPE html>
+<html>
+<head type="text/css" media="print">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">    {%if title%}
+    <title>LogOnGo - {{title}}</title>
+    {%else%}
+    <title>LogOnGo</title>
+    {%endif%}
+
+    {%block styles%}
+        <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous"> -->
+        {%bootstrap_css%}
+        <link rel="stylesheet" href="{% static 'css/index.css' %}">
+        <!-- <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+    {%endblock%}
+</head>
+
+<body>
+
+    <ul>
+        <p>Our endpoints:</p>
+        <li>
+            <a href="{% url 'profile_details' %}">Profile details</a>
+        </li>
+        <li>
+            <a href="{% url 'our_fuels' %}">Our fuels</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_info' %}">Diesel info</a>
+        </li>
+        <li>
+            <a href="{% url 'gas_info' %}">Gas info</a>
+        </li>
+        <li>
+            <a href="{% url 'petrol_info' %}">Petrol info</a>
+        </li>
+        <li>
+            <a href="{% url 'all_logs' %}">All logs</a>
+        </li>
+        <li>
+            <a href="{% url 'logs_today' %}">Logs today</a>
+        </li>
+        <li>
+            <a href="{% url 'user_logs' %}">User logs</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_logs_today' %}">Diesel logs today</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_logs_ii_today' %}">Diesel logs (ii) today</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_logs_iii_today' %}">Diesel logs (iii) today</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_logs_iv_today' %}">Diesel logs (iv) today</a>
+        </li>
+        <li>
+            <a href="{% url 'petrol_logs_today' %}">Petrol logs today</a>
+        </li>
+        <li>
+            <a href="{% url 'petrol_logs_ii_today' %}">Petrol logs (ii) today</a>
+        </li>
+        <li>
+            <a href="{% url 'petrol_logs_iii_today' %}">Petrol logs (iii) today</a>
+        </li>
+        <li>
+            <a href="{% url 'petrol_logs_iv_today' %}">Petrol logs (iv) today</a>
+        </li>
+        <li>
+            <a href="{% url 'gas_logs_today' %}">Gas logs today</a>
+        </li>
+        <li>
+            <a href="{% url 'gas_logs_ii_today' %}">Gas logs (ii) today</a>
+        </li>
+        <li>
+            <a href="{% url 'gas_logs_iii_today' %}">Gas logs (iii) today</a>
+        </li>
+        <li>
+            <a href="{% url 'gas_logs_iv_today' %}">Gas logs (iv) today</a>
+        </li>
+        <li>
+            <a href="{% url 'all_mpesa_logs' %}">All Mpesa logs</a>
+        </li>
+        <li>
+            <a href="{% url 'mpesa_logs_today' %}">Mpesa logs today</a>
+        </li>
+        <li>
+            <a href="{% url 'user_mpesa_logs' %}">User Mpesa logs</a>
+        </li>
+        <li>
+            <a href="{% url 'mpesa_cumulative' %}">Mpesa cumulative</a>
+        </li>
+        <li>
+            <a href="{% url 'mpesa_total_today' %}">Mpesa total today</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_logs_yesterday' %}">Diesel logs yesterday</a>
+        </li>
+        <li>
+            <a href="{% url 'total_diesel_today' %}">Total Diesel received today</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_received_today' %}">Diesel received today</a>
+        </li>
+        <li>
+            <a href="{% url 'total_petrol_today' %}">Total Petrol received today</a>
+        </li>
+        <li>
+            <a href="{% url 'petrol_received_today' %}">Petrol received today</a>
+        </li>
+        <li>
+            <a href="{% url 'total_gas_today' %}">Total Gas received today</a>
+        </li>
+        <li>
+            <a href="{% url 'gas_received_today' %}">Gas received today</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_log_details' %}">Diesel log details</a>
+        </li>
+        <li>
+            <a href="{% url 'petrol_log_details' %}">Petrol log details</a>
+        </li>
+        <li>
+            <a href="{% url 'gas_log_details' %}">Gas log details</a>
+        </li>
+        <li>
+            <a href="{% url 'mpesa_log_details' %}">Mpesa log details</a>
+        </li>
+        <li>
+            <a href="{% url 'past_logs' %}">Past logs</a>
+        </li>
+    </ul>
+
+
+    {%block scripts%}
+    
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+    {%bootstrap_javascript%}
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.5/dist/umd/popper.min.js" integrity="sha384-Xe+8cL9oJa6tN/veChSP7q+mnSPaj5Bcu9mPX5F5xIGE0DVittaqT5lorf0EI7Vk" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+
+    <script>
+        function myFunction() {
+          var x = document.getElementById("myTopnav");
+          if (x.className === "topnav") {
+            x.className += " responsive";
+          } else {
+            x.className = "topnav";
+          }
+        }
+        </script>
+    <script src="{%static 'js/root.js'%}"></script>
+    <!-- <script src="https://unpkg.com/htmx.org@1.6.0"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.5/dist/umd/popper.min.js" integrity="sha384-Xe+8cL9oJa6tN/veChSP7q+mnSPaj5Bcu9mPX5F5xIGE0DVittaqT5lorf0EI7Vk" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+{%endblock%}
+
+</body>
+</html>
