@@ -167,6 +167,14 @@ class TodayDieselLogs(APIView):
         serializers = LogSerializer(today_diesel_logs,many=False)
         return Response(serializers.data)
 
+    def post(self, request, format=None):
+        serializers = LogSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class TodayDieselLogsTwo(APIView):
     def get_today_diesel_logs_two(self):
         today = dt.date.today()
