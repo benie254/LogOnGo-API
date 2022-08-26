@@ -48,12 +48,12 @@ class RegisteredFuels(APIView):
 class GasInfo(APIView):
     def get_gas_info(self):
         try:
-            return Fuel.objects.all().filter(id=3).last()
+            return Fuel.objects.all().filter(fuel_type='Gas').last()
         except Fuel.DoesNotExist:
             return Http404
 
     def get(self, request, format=None):
-        gas_info = Fuel.objects.all().filter(id=3).last()
+        gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
         serializers = FuelSerializer(gas_info,many=False)
         return Response(serializers.data)
 
@@ -69,24 +69,24 @@ class GasInfo(APIView):
 class DieselInfo(APIView):
     def get_diesel_info(self):
         try:
-            return Fuel.objects.all().filter(pk=1).last()
+            return Fuel.objects.all().filter(fuel_type='Diesel').last()
         except Fuel.DoesNotExist:
             return Http404
 
     def get(self, request, format=None):
-        diesel_info = Fuel.objects.all().filter(pk=1).last()
+        diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
         serializers = FuelSerializer(diesel_info,many=False)
         return Response(serializers.data)
 
 class PetrolInfo(APIView):
     def get_petrol_info(self):
         try:
-            return Fuel.objects.all().filter(id=2).last()
+            return Fuel.objects.all().filter(fuel_type='Petrol').last()
         except Fuel.DoesNotExist:
             return Http404
 
     def get(self, request, format=None):
-        petrol_info = Fuel.objects.all().filter(id=2).last()
+        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         serializers = FuelSerializer(petrol_info,many=False)
         return Response(serializers.data)
 
