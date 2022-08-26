@@ -153,21 +153,21 @@ class UserLogs(APIView):
         serializers = LogSerializer(user_logs,many=True)
         return Response(serializers.data)
 
-class TodayDieselLogs(APIView):
-    def get_today_diesel_logs(self,diesel_id):
+class TodayFuelLogs(APIView):
+    def get_today_diesel_logs(self,id):
         today = dt.date.today()
         try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).first()
+            return Log.objects.all().filter(date=today).filter(fuel_id=id).first()
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, diesel_id, format=None):
+    def get(self, request, id, format=None):
         today = dt.date.today()
-        today_diesel_logs = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).first()
+        today_diesel_logs = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
         serializers = LogSerializer(today_diesel_logs,many=False)
         return Response(serializers.data)
 
-    def post(self, request, diesel_id, format=None):
+    def post(self, request, id, format=None):
         serializers = LogSerializer(data=request.data)
         if serializers.is_valid():
             serializers.save()
