@@ -58,7 +58,7 @@ class GasInfo(APIView):
         return Response(serializers.data)
 
     def put(sel, request, format=None):
-        gas_info = Fuel.objects.all().filter(id=3).last()
+        gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
         serializers = FuelSerializer(gas_info,request.data)
         if serializers.is_valid():
             serializers.save()
@@ -78,6 +78,15 @@ class DieselInfo(APIView):
         serializers = FuelSerializer(diesel_info,many=False)
         return Response(serializers.data)
 
+    def put(sel, request, format=None):
+        gas_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
+        serializers = FuelSerializer(gas_info,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class PetrolInfo(APIView):
     def get_petrol_info(self):
         try:
@@ -89,6 +98,15 @@ class PetrolInfo(APIView):
         petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         serializers = FuelSerializer(petrol_info,many=False)
         return Response(serializers.data)
+
+    def put(sel, request, format=None):
+        gas_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
+        serializers = FuelSerializer(gas_info,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AllLogs(APIView):
     def get_all_logs(self):
