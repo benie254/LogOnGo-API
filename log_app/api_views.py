@@ -134,6 +134,13 @@ class TodayLogs(APIView):
         serializers = LogSerializer(today_logs,many=True)
         return Response(serializers.data)
 
+    def post(self, request, format=None):
+        serializers = LogSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UserLogs(APIView):
     def get_user_logs(self,user_id):
         try:
@@ -388,6 +395,13 @@ class TodayMpesaLogs(APIView):
         serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
         return Response(serializers.data)
 
+    def post(self, request, format=None):
+        serializers = LogMpesaSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UserMpesaLogs(APIView):
     def get_user_mpesa_logs(self,user_id):
         try:
@@ -425,6 +439,13 @@ class MpesaTodayTotal(APIView):
         mpesa_total = LogMpesa.objects.all().filter(date=today).aggregate(TOTAL = Sum('amount'))['TOTAL']
         serializers = LogMpesaSerializer(mpesa_total,many=False)
         return Response(serializers.data)
+
+    def post(self, request, format=None):
+        serializers = LogSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TotalDieselReceivedToday(APIView):
     def get_diesel_received(self):
