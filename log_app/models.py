@@ -209,7 +209,7 @@ class Fuel(models.Model):
         return self.price_per_litre
 
 class Log(models.Model):
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(default=timezone.now,null=True,blank=True)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     eod_reading_lts = models.IntegerField()
     eod_reading_yesterday = models.IntegerField(null=True,blank=True)
