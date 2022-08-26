@@ -167,7 +167,8 @@ class TodayFuelLogs(APIView):
         serializers = LogSerializer(today_diesel_logs,many=False)
         return Response(serializers.data)
 
-    def post(self, request, id, format=None):
+class AddLog(APIView):
+    def post(self, request, format=None):
         serializers = LogSerializer(data=request.data)
         if serializers.is_valid():
             serializers.save()
