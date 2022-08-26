@@ -52,9 +52,11 @@
         <li>
             <a href="{% url 'user_logs' %}">User logs</a>
         </li>
+        {%for fuel in fuels%}
         <li>
-            <a href="{% url 'diesel_logs_today' %}">Diesel logs today</a>
+            <a href="{% url 'diesel_logs_today' fuel.id %}">Diesel logs today</a>
         </li>
+        {%endfor%}
         <li>
             <a href="{% url 'diesel_logs_ii_today' %}">Diesel logs (ii) today</a>
         </li>
