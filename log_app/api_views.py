@@ -69,12 +69,12 @@ class GasInfo(APIView):
 class DieselInfo(APIView):
     def get_diesel_info(self):
         try:
-            return Fuel.objects.all().filter(id=1).last()
+            return Fuel.objects.all().filter(pk=1).last()
         except Fuel.DoesNotExist:
             return Http404
 
     def get(self, request, format=None):
-        diesel_info = Fuel.objects.all().filter(id=1).last()
+        diesel_info = Fuel.objects.all().filter(pk=1).last()
         serializers = FuelSerializer(diesel_info,many=False)
         return Response(serializers.data)
 
