@@ -52,92 +52,58 @@
         <li>
             <a href="{% url 'user_logs' %}">User logs</a>
         </li>
+        {%for f in fuels%} 
         <li>
-            {%for f in fuels%} 
             <a href="{% url 'fuel_logs_today' f.id %}">{{f.fuel_type}} logs today</a>
-            {%endfor%}
         </li>
         <li>
-            <a href="{% url 'diesel_logs_ii_today' %}">Diesel logs (ii) today</a>
+            <a href="{% url 'fuel_logs_ii_today' f.id %}">{{f.fuel_type}} logs (ii) today</a>
         </li>
         <li>
-            <a href="{% url 'diesel_logs_iii_today' %}">Diesel logs (iii) today</a>
+            <a href="{% url 'fuel_logs_iii_today' f.id %}">{{f.fuel_type}} logs (iii) today</a>
         </li>
         <li>
-            <a href="{% url 'diesel_logs_iv_today' %}">Diesel logs (iv) today</a>
+            <a href="{% url 'fuel_logs_iv_today' f.id %}">{{f.fuel_type}} logs (iv) today</a>
         </li>
-        <li>
-            <a href="{% url 'petrol_logs_today' %}">Petrol logs today</a>
-        </li>
-        <li>
-            <a href="{% url 'petrol_logs_ii_today' %}">Petrol logs (ii) today</a>
-        </li>
-        <li>
-            <a href="{% url 'petrol_logs_iii_today' %}">Petrol logs (iii) today</a>
-        </li>
-        <li>
-            <a href="{% url 'petrol_logs_iv_today' %}">Petrol logs (iv) today</a>
-        </li>
-        <li>
-            <a href="{% url 'gas_logs_today' %}">Gas logs today</a>
-        </li>
-        <li>
-            <a href="{% url 'gas_logs_ii_today' %}">Gas logs (ii) today</a>
-        </li>
-        <li>
-            <a href="{% url 'gas_logs_iii_today' %}">Gas logs (iii) today</a>
-        </li>
-        <li>
-            <a href="{% url 'gas_logs_iv_today' %}">Gas logs (iv) today</a>
-        </li>
+        {%endfor%}
         <li>
             <a href="{% url 'all_mpesa_logs' %}">All Mpesa logs</a>
         </li>
         <li>
             <a href="{% url 'mpesa_logs_today' %}">Mpesa logs today</a>
         </li>
+        {%for u in users%}
         <li>
-            <a href="{% url 'user_mpesa_logs' %}">User Mpesa logs</a>
+            <a href="{% url 'user_mpesa_logs' u.id %}">User Mpesa logs</a>
         </li>
+        {%endfor%}
         <li>
             <a href="{% url 'mpesa_cumulative' %}">Mpesa cumulative</a>
         </li>
         <li>
             <a href="{% url 'mpesa_total_today' %}">Mpesa total today</a>
         </li>
+        {%for f in fuels%}
         <li>
-            <a href="{% url 'diesel_logs_yesterday' %}">Diesel logs yesterday</a>
+            <a href="{% url 'fuel_logs_yesterday' f.id %}">{{f.fuel_type}} logs yesterday</a>
         </li>
         <li>
-            <a href="{% url 'total_diesel_today' %}">Total Diesel received today</a>
+            <a href="{% url 'total_diesel_today' f.id %}">Total {{f.fuel_type}} received today</a>
         </li>
         <li>
-            <a href="{% url 'diesel_received_today' %}">Diesel received today</a>
+            <a href="{% url 'diesel_received_today' f.id %}">{{f.fuel_type}} received today info</a>
         </li>
+        {%endfor%}
+        {%for l in logs%}
         <li>
-            <a href="{% url 'total_petrol_today' %}">Total Petrol received today</a>
+            <a href="{% url 'log_details' l.id %}">Log details</a>
         </li>
+        {%endfor%}
+        {%for m in mpesa%}
         <li>
-            <a href="{% url 'petrol_received_today' %}">Petrol received today</a>
+            <a href="{% url 'mpesa_log_details' m.id %}">Mpesa log details</a>
         </li>
-        <li>
-            <a href="{% url 'total_gas_today' %}">Total Gas received today</a>
-        </li>
-        <li>
-            <a href="{% url 'gas_received_today' %}">Gas received today</a>
-        </li>
-        <li>
-            <a href="{% url 'diesel_log_details' %}">Diesel log details</a>
-        </li>
-        <li>
-            <a href="{% url 'petrol_log_details' %}">Petrol log details</a>
-        </li>
-        <li>
-            <a href="{% url 'gas_log_details' %}">Gas log details</a>
-        </li>
-        <li>
-            <a href="{% url 'mpesa_log_details' %}">Mpesa log details</a>
-        </li>
+        {%endfor%}
         <li>
             <a href="">Past logs</a>
         </li>
