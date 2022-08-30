@@ -5,7 +5,7 @@ from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, A
 class MyUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ('id','username','email','first_name','last_name','petrol_station')
+        fields = ('id','email','first_name','last_name','petrol_station')
         extra_kwargs = {
             'password':{'write_only':True}
         }     

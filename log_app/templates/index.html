@@ -28,9 +28,11 @@
 
     <ul>
         <p>Our endpoints:</p>
+        {% for u in users %}
         <li>
-            <a href="{% url 'profile_details' %}">Profile details</a>
+            <a href="{% url 'profile_details' u.id %}">Profile details</a>
         </li>
+        {% endfor %}
         <li>
             <a href="{% url 'our_fuels' %}">Our fuels</a>
         </li>
@@ -88,10 +90,10 @@
             <a href="{% url 'fuel_logs_yesterday' f.id %}">{{f.fuel_type}} logs yesterday</a>
         </li>
         <li>
-            <a href="{% url 'total_diesel_today' f.id %}">Total {{f.fuel_type}} received today</a>
+            <a href="{% url 'total_fuel_today' f.id %}">Total {{f.fuel_type}} received today</a>
         </li>
         <li>
-            <a href="{% url 'diesel_received_today' f.id %}">{{f.fuel_type}} received today info</a>
+            <a href="{% url 'fuel_received_today' f.id %}">{{f.fuel_type}} received today info</a>
         </li>
         {%endfor%}
         {%for l in logs%}
