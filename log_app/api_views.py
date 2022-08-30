@@ -1,3 +1,4 @@
+import html
 from django.shortcuts import get_object_or_404, render,redirect 
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -21,7 +22,7 @@ class ProfileDetails(APIView):
         except MyUser.DoesNotExist:
             return Http404
     
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         profile_details = MyUser.objects.all().filter(pk=id)
         serializers = MyUserSerializer(profile_details,many=False)
         return Response(serializers.data)
@@ -33,7 +34,7 @@ class RegisteredFuels(APIView):
         except Fuel.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         fuuel_info = Fuel.objects.all()
         serializers = FuelSerializer(fuuel_info,many=True)
         return Response(serializers.data)
@@ -45,12 +46,12 @@ class GasInfo(APIView):
         except Fuel.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
         serializers = FuelSerializer(gas_info,many=False)
         return Response(serializers.data)
 
-    def put(self, request, format=None):
+    def put(self, request, format=html):
         gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
         serializers = FuelSerializer(gas_info,request.data)
         if serializers.is_valid():
@@ -66,12 +67,12 @@ class DieselInfo(APIView):
         except Fuel.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
         serializers = FuelSerializer(diesel_info,many=False)
         return Response(serializers.data)
 
-    def put(self, request, format=None):
+    def put(self, request, format=html):
         gas_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
         serializers = FuelSerializer(gas_info,request.data)
         if serializers.is_valid():
@@ -87,12 +88,12 @@ class PetrolInfo(APIView):
         except Fuel.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         serializers = FuelSerializer(petrol_info,many=False)
         return Response(serializers.data)
 
-    def put(self, request, format=None):
+    def put(self, request, format=html):
         gas_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         serializers = FuelSerializer(gas_info,request.data)
         if serializers.is_valid():
@@ -108,7 +109,7 @@ class AllLogs(APIView):
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         all_logs = Log.objects.all()
         serializers = LogSerializer(all_logs,many=True)
         return Response(serializers.data)
@@ -121,13 +122,13 @@ class TodayLogs(APIView):
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         today = dt.date.today()
         today_logs = Log.objects.all().filter(date=today)
         serializers = LogSerializer(today_logs,many=True)
         return Response(serializers.data)
 
-    def post(self, request, format=None):
+    def post(self, request, format=html):
         serializers = LogSerializer(data=request.data)
         if serializers.is_valid():
             serializers.save()
@@ -141,7 +142,7 @@ class UserLogs(APIView):
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         user_logs = Log.objects.all().filter(user_id=id).order_by('-date')
         serializers = LogSerializer(user_logs,many=True)
         return Response(serializers.data)
@@ -154,7 +155,7 @@ class TodayFuelLogs(APIView):
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         today = dt.date.today()
         today_fuel_logs = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
         serializers = LogSerializer(today_fuel_logs,many=False)
@@ -168,7 +169,7 @@ class TodayFuelLogsTwo(APIView):
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         today = dt.date.today()
         today_fuel_logs_two = Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:2]
         serializers = LogSerializer(today_fuel_logs_two,many=True)
@@ -182,7 +183,7 @@ class TodayFuelLogsThree(APIView):
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         today = dt.date.today()
         today_fuel_logs_three = Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:3]
         serializers = LogSerializer(today_fuel_logs_three,many=True)
@@ -196,7 +197,7 @@ class TodayFuelLogsFour(APIView):
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         today = dt.date.today()
         today_fuel_logs_four = Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:4]
         serializers = LogSerializer(today_fuel_logs_four,many=True)
@@ -211,7 +212,7 @@ class YesterdayFuelLogs(APIView):
         except Log.DoesNotExist:
             return Http404
 
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         today = dt.date.today()
         yesterday = today - dt.timedelta(days=1)
         yesterday_fuel_logs = Log.objects.all().filter(date=yesterday).filter(fuel_id=id).first()
@@ -225,7 +226,7 @@ class AllMpesaLogs(APIView):
         except LogMpesa.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         all_mpesa_logs = LogMpesa.objects.all()
         serializers = LogMpesaSerializer(all_mpesa_logs,many=True)
         return Response(serializers.data)
@@ -238,13 +239,13 @@ class TodayMpesaLogs(APIView):
         except LogMpesa.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         today = dt.date.today()
         today_mpesa_logs = LogMpesa.objects.all().filter(date=today)
         serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
         return Response(serializers.data)
 
-    def post(self, request, format=None):
+    def post(self, request, format=json):
         serializers = LogMpesaSerializer(data=request.data)
         if serializers.is_valid():
             serializers.save()
@@ -258,7 +259,7 @@ class UserMpesaLogs(APIView):
         except LogMpesa.DoesNotExist:
             return Http404
 
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         user_mpesa_logs = LogMpesa.objects.all().filter(user_id=id).order_by('-date')
         serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
         return Response(serializers.data)
@@ -270,7 +271,7 @@ class MpesaCumulative(APIView):
         except LogMpesa.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         mpesa_total = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
         serializers = LogMpesaSerializer(mpesa_total,many=False)
         return Response(serializers.data)
@@ -283,13 +284,13 @@ class MpesaTodayTotal(APIView):
         except LogMpesa.DoesNotExist:
             return Http404
 
-    def get(self, request, format=None):
+    def get(self, request, format=html):
         today = dt.date.today()
         mpesa_total = LogMpesa.objects.all().filter(date=today).aggregate(TOTAL = Sum('amount'))['TOTAL']
         serializers = LogMpesaSerializer(mpesa_total,many=False)
         return Response(serializers.data)
 
-    def post(self, request, format=None):
+    def post(self, request, format=html):
         serializers = LogMpesaSerializer(data=request.data)
         if serializers.is_valid():
             serializers.save()
@@ -304,7 +305,7 @@ class TotalFuelReceivedToday(APIView):
         except FuelReceived.DoesNotExist:
             return Http404
     
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         today = dt.date.today()
         fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         serializers = FuelReceivedSerializer(fuel_received,many=False)
@@ -318,7 +319,7 @@ class FuelReceivedTodayInfo(APIView):
         except FuelReceived.DoesNotExist:
             return Http404
     
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         today = dt.date.today()
         fuel_received_info = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today)
         serializers = FuelReceivedSerializer(fuel_received_info,many=True)
@@ -331,7 +332,7 @@ class LogDetails(APIView):
         except Log.DoesNotExist:
             return Http404
     
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         log_details = Log.objects.all().filter(pk=id).first()
         serializers = LogSerializer(log_details,many=False)
         return Response(serializers.data)
@@ -343,7 +344,7 @@ class MpesaLogDetails(APIView):
         except LogMpesa.DoesNotExist:
             return Http404
     
-    def get(self, request, id, format=None):
+    def get(self, request, id, format=html):
         mpesa_details = LogMpesa.objects.all().filter(pk=id)
         serializers = LogMpesaSerializer(mpesa_details,many=False)
         return Response(serializers.data)
