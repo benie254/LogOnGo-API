@@ -198,6 +198,17 @@ def update_profile_signal(sender, instance, created, **kwargs):
         Profile.objects.create(user=instance)
     instance.profile.save()
 
+class PetrolStation(models.Model):
+    user = models.OneToOneField(MyUser, on_delete=models.CASCADE)
+    site_name = models.CharField(max_length=100,null=True)
+    signup_confirmation = models.BooleanField(default=False) 
+
+@receiver(post_save, sender=MyUser)
+def update_petrol_station_signal(sender, instance, created, **kwargs):
+    if created:
+        PetrolStation.objects.create(user=instance)
+    instance.petrol_station.save()
+
 class Fuel(models.Model):
     CHOICES = (('Petrol','Petrol'),('Diesel','Diesel'),('Gas','Gas'))
     fuel_type = models.CharField(max_length=60,choices=CHOICES,null=True,blank=True)
@@ -219,6 +230,7 @@ class Log(models.Model):
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
     user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
+    site_name = models.ForeignKey(PetrolStation,on_delete=models.CASCADE,null=True,blank=True)
 
     def __int__(self):
         return self.eod_reading_lts
@@ -253,6 +265,7 @@ class LogMpesa(models.Model):
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
     user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     logged_by = models.CharField(max_length=120,blank=True,null=True)
+    site_name = models.ForeignKey(PetrolStation,on_delete=models.CASCADE,null=True,blank=True)
 
     def __int__(self):
         return self.transaction_number 

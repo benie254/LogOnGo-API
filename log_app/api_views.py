@@ -14,18 +14,6 @@ from django.contrib import messages
 from log_app.models import Announcement, Contact, Incident, Log, LogMpesa
 
 # Create your views here.
-class ProfileDetails(APIView):
-    def get_profile_details(self, id):
-        try:
-            return MyUser.objects.all().filter(pk=id) 
-        except MyUser.DoesNotExist:
-            return Http404
-    
-    def get(self, request, id, format=None):
-        profile_details = MyUser.objects.all().filter(pk=id)
-        serializers = MyUserSerializer(profile_details,many=False)
-        return Response(serializers.data)
-
 class RegisteredFuels(APIView):
     def get_registered_fuels(self):
         try:

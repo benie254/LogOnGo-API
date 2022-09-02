@@ -1,11 +1,14 @@
 from django.conf.urls import include 
 from django.urls import path,re_path as url 
-from log_app import views, api_views 
+from log_app import views, api_views, auth_views 
 
 
 urlpatterns = [
     path('',views.home,name='home'),
-    url(r'^profile-details/(\d+)$', api_views.ProfileDetails.as_view(),name='profile_details'),
+
+    url(r'^api/user/register/$', auth_views.RegisterUser.as_view(),name='registration'),
+    url(r'^profile-details/$', auth_views.ProfileDetails.as_view(),name='profile_details'),
+    
     url(r'^our-fuels/$', api_views.RegisteredFuels.as_view(),name='our_fuels'),
     url(r'^diesel-info/$', api_views.DieselInfo.as_view(),name='diesel_info'),
     url(r'^gas-info/$', api_views.GasInfo.as_view(),name='gas_info'),
