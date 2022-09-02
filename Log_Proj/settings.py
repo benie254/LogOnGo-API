@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'django_registration',
     'bootstrap5',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
 ]
 

@@ -13,7 +13,8 @@ from django.core.mail import send_mail
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
+from django.conf import settings
+from rest_framework.authtoken.models import Token
 
 # Create your models here.
 class MyAccountManager(BaseUserManager):
@@ -183,6 +184,10 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
         """Send an email to this user."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)
 
 # created upon successful registration
 class Profile(models.Model):
