@@ -6,7 +6,6 @@ from log_app import views, api_views, auth_views
 urlpatterns = [
     path('',views.home,name='home'),
 
-    url(r'^api/user/register/$', auth_views.RegisterUser.as_view(),name='registration'),
     url(r'^profile-details/$', auth_views.ProfileDetails.as_view(),name='profile_details'),
     
     url(r'^our-fuels/$', api_views.RegisteredFuels.as_view(),name='our_fuels'),
@@ -15,7 +14,7 @@ urlpatterns = [
     url(r'^petrol-info/$', api_views.PetrolInfo.as_view(),name='petrol_info'), 
     url(r'^all-logs/$', api_views.AllLogs.as_view(),name='all_logs'),
     url(r'^logs-today/$', api_views.TodayLogs.as_view(),name='logs_today'),
-    path(r'^user-logs/(\d+)$', api_views.UserLogs.as_view(),name='user_logs'),
+    url(r'^user-logs/(\d+)$', api_views.UserLogs.as_view(),name='user_logs'),
     url(r'^fuel-logs-today/(\d+)$', api_views.TodayFuelLogs.as_view(),name='fuel_logs_today'),
     url(r'^fuel-logs-ii-today/(\d+)$', api_views.TodayFuelLogsTwo.as_view(),name='fuel_logs_ii_today'),
     url(r'^fuel-logs-iii-today/(\d+)$', api_views.TodayFuelLogsThree.as_view(),name='fuel_logs_iii_today'),

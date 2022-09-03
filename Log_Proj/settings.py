@@ -119,7 +119,7 @@ LOGIN_REDIRECT_URL = '/'
 AUTH_USER_MODEL = 'log_app.MyUser'
 
 REST_FRAMEWORK = {
-    'EXCEPTION_HANDLER': 'accounts.exceptions.core_exception_handler',
+    'EXCEPTION_HANDLER': 'log_app.exceptions.core_exception_handler',
     'NON_FIELD_ERRORS_KEY': 'error',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

@@ -51,9 +51,11 @@
         <li>
             <a href="{% url 'logs_today' %}">Logs today</a>
         </li>
+        {% for u in users %}
         <li>
-            <a href="{% url 'user_logs' %}">User logs</a>
+            <a href="{% url 'user_logs' u.id %}">User logs</a>
         </li>
+        {% endfor %}
         {%for f in fuels%} 
         <li>
             <a href="{% url 'fuel_logs_today' f.id %}">{{f.fuel_type}} logs today</a>

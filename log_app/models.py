@@ -212,7 +212,6 @@ class PetrolStation(models.Model):
 def update_petrol_station_signal(sender, instance, created, **kwargs):
     if created:
         PetrolStation.objects.create(user=instance)
-    instance.petrol_station.save()
 
 class Fuel(models.Model):
     CHOICES = (('Petrol','Petrol'),('Diesel','Diesel'),('Gas','Gas'))

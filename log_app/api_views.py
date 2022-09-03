@@ -2,7 +2,8 @@ from django.shortcuts import get_object_or_404, render,redirect
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogSerializer, MyUserSerializer
+from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogSerializer
+
 
 from django.http import HttpResponse,Http404, JsonResponse
 from django.contrib.auth.decorators import login_required
