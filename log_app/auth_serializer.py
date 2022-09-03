@@ -39,39 +39,43 @@ class UserRegSerializer(serializers.ModelSerializer):
             'last_name': {'required': True},
             'username': {'required': True},
             'petrol_station': {'required': True},
+            'password':{'write_only':True}
         }
-    def validate(self, attrs, data):
-        email = data.get('email', None)
-        if email is None:
-            raise serializers.ValidationError('An email address is required to register.')
+    # def validate(self, attrs, data):
+    #     email = data.get('email', None)
+    #     if email is None:
+    #         raise serializers.ValidationError('An email address is required to register.')
 
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError(
-                {"password": "Please match the password fields."}
-            )
-        return attrs 
+    #     if attrs['password'] != attrs['password2']:
+    #         raise serializers.ValidationError(
+    #             {"password": "Please match the password fields."}
+    #         )
+    #     return attrs 
         
-    def validate_email(self,value: str) -> tuple[bool, str]:
-        valid, error_text = email_is_valid(value)
-        if not valid:
-            raise serializers.ValidationError(error_text)
-        try:
-            email_name, domain_part = value.strip().rsplit('@', 1)
-        except ValueError:
-            pass
-        else:
-            value = '@'.join([email_name, domain_part.lower()])
+    # def validate_email(self,value: str) -> tuple[bool, str]:
+    #     valid, error_text = email_is_valid(value)
+    #     if not valid:
+    #         raise serializers.ValidationError(error_text)
+    #     try:
+    #         email_name, domain_part = value.strip().rsplit('@', 1)
+    #     except ValueError:
+    #         pass
+    #     else:
+    #         value = '@'.join([email_name, domain_part.lower()])
 
-        return value
+    #     return value
     def create(self, validate_data):
-        user = MyUser.objects.create(
-            username = validate_data['username'],
-            email = validate_data['email'],
-            first_name = validate_data['first_name'],
-            last_name = validate_data['last_name'],
-            petrol_station = validate_data['petrol_station']
-        )
-        user.set_password(validate_data['password'])
+        # user = MyUser.objects.create(
+        #     username = validate_data['username'],
+        #     email = validate_data['email'],
+        #     first_name = validate_data['first_name'],
+        #     last_name = validate_data['last_name'],
+        #     petrol_station = validate_data['petrol_station']
+        # )
+        # user.set_password(validate_data['password'])
+        # user.save()
+        # user.refresh_from_db()
+        user = MyUser.create_user(self, username=None, email=None, password=None)
         user.save()
         user.refresh_from_db()
         user.profile.username = validate_data['username']
