@@ -15,10 +15,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView,)
+from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView,TokenBlacklistView,)
+from log_app import auth_views 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('log_app.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/blacklist/', TokenBlacklistView.as_view(), name='token_blacklist'),
+
+    path('register/', auth_views.RegistrationAPIView.as_view(), name='register_user'),
+    path('login/', auth_views.LoginAPIView.as_view(), name='login_user'),
+    path('logout/', auth_views.LogoutAPIView.as_view(), name="logout_user"),
+    path('user-update/', auth_views.UserRetrieveUpdateAPIView.as_view(), name='user'),
 ]

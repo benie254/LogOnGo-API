@@ -16,53 +16,7 @@ from django.template.loader import render_to_string
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 
-class MyUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MyUser
-        fields = ('id','email','first_name','last_name','petrol_station')
-        extra_kwargs = {
-            'password':{'write_only':True}
-        }   
-class UserRegSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True,validators=[UniqueValidator(queryset=MyUser.objects.all())])  
-    password = serializers.CharField(write_only=True,required=True,validators=[validate_password])
-    password2 = serializers.CharField(write_only=True,required=True)
-    class Meta:
-        model = MyUser
-        fields = ('username','password','password2','email','first_name','last_name','petrol_station')
-        extra_kwargs = {
-            'first_name': {'required': True},
-            'last_name': {'required': True},
-            'username': {'required': True},
-            'petrol_station': {'required': True},
-        }
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError(
-                {"password": "Please match the password fields."}
-            )
-        return attrs 
-    def create(self, validate_data):
-        user = MyUser.objects.create(
-            username = validate_data['username'],
-            email = validate_data['email'],
-            first_name = validate_data['first_name'],
-            last_name = validate_data['last_name'],
-            petrol_station = validate_data['petrol_station']
-        )
-        user.set_password(validate_data['password'])
-        user.save()
-        user.refresh_from_db()
-        user.profile.username = validate_data['username']
-        user.profile.first_name = validate_data['first_name']
-        user.profile.last_name = validate_data['last_name']
-        user.profile.petrol_station = validate_data['petrol_station']
-        user.profile.email = validate_data['email']
-        user.save()
-        user.refresh_from_db()
-        user.petrol_station.site_name = validate_data['petrol_station']
-        user.save()
-        return user 
+from log_app.utils import validate_email as email_is_valid
 
 class FuelSerializer(serializers.ModelSerializer):
     class Meta:
