@@ -20,6 +20,11 @@ from rest_framework.request import Request
 
 from log_app.renderers import UserJSONRenderer
 
+import jwt
+from rest_framework_simplejwt.settings import api_settings
+jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
 
 
 class ProfileDetails(APIView): 
@@ -42,13 +47,31 @@ class RegistrationAPIView(APIView):
     renderer_classes = (UserJSONRenderer,)
     serializer_class = UserRegSerializer
 
-    def post(self, request: Request) -> Response:
-        """Return user response after a successful registration."""
-        user_request = request.data.get('user', {})
-        serializer = self.serializer_class(data=user_request)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    # def post(self, request: Request) -> Response:
+    #     """Return user response after a successful registration."""
+    #     user_request = request.data.get('user', {})
+    #     serializer = self.serializer_class(data=user_request)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            user = self.model.get(username=serializer.data['username'])
+            payload = jwt_payload_handler(user)
+            token = jwt_encode_handler(payload)
+            return Response(
+                token,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+        else:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class LoginAPIView(APIView):

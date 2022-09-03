@@ -33,15 +33,15 @@ class UserRegSerializer(serializers.ModelSerializer):
     # password2 = serializers.CharField(write_only=True,required=True)
     class Meta:
         model = MyUser
-        fields = ('username','email','first_name','last_name','petrol_station')
+        fields = ('username','email',)
     
     def create(self, validated_data):
         user = MyUser(
             email=validated_data['email'],
             username=validated_data['username'],
-            first_name=validated_data['username'],
-            last_name=validated_data['username'],
-            petrol_station=validated_data['petrol_station']
+            # first_name=validated_data['first_name'],
+            # last_name=validated_data['last_name'],
+            # petrol_station=validated_data['petrol_station']
         )
         user.set_password(validated_data['password'])
         user.is_active = True
