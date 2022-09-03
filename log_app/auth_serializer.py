@@ -33,14 +33,8 @@ class UserRegSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True,required=True)
     class Meta:
         model = MyUser
-        fields = ('username','password','password2','email','first_name','last_name','petrol_station')
-        extra_kwargs = {
-            'first_name': {'required': True},
-            'last_name': {'required': True},
-            'username': {'required': True},
-            'petrol_station': {'required': True},
-            'password':{'write_only':True}
-        }
+        fields = ('username','email','first_name','last_name','petrol_station')
+        
     # def validate(self, attrs, data):
     #     email = data.get('email', None)
     #     if email is None:
@@ -65,28 +59,25 @@ class UserRegSerializer(serializers.ModelSerializer):
 
     #     return value
     def create(self, validate_data):
-        # user = MyUser.objects.create(
-        #     username = validate_data['username'],
-        #     email = validate_data['email'],
-        #     first_name = validate_data['first_name'],
-        #     last_name = validate_data['last_name'],
-        #     petrol_station = validate_data['petrol_station']
-        # )
-        # user.set_password(validate_data['password'])
+        user = MyUser.objects.create(
+            username = validate_data['username'],
+            email = validate_data['email'],
+            first_name = validate_data['first_name'],
+            last_name = validate_data['last_name'],
+            petrol_station = validate_data['petrol_station']
+        )
+        user.set_password(validate_data['password'])
+        user.save()
+        # user.refresh_from_db()
+        # user.profile.username = validate_data['username']
+        # user.profile.first_name = validate_data['first_name']
+        # user.profile.last_name = validate_data['last_name']
+        # user.profile.petrol_station = validate_data['petrol_station']
+        # user.profile.email = validate_data['email']
         # user.save()
         # user.refresh_from_db()
-        user = MyUser.create_user(self, username=None, email=None, password=None)
-        user.save()
-        user.refresh_from_db()
-        user.profile.username = validate_data['username']
-        user.profile.first_name = validate_data['first_name']
-        user.profile.last_name = validate_data['last_name']
-        user.profile.petrol_station = validate_data['petrol_station']
-        user.profile.email = validate_data['email']
-        user.save()
-        user.refresh_from_db()
-        user.petrol_station.site_name = validate_data['petrol_station']
-        user.save()
+        # user.petrol_station.site_name = validate_data['petrol_station']
+        # user.save()
         return user 
 
 class LoginSerializer(serializers.ModelSerializer[MyUser]):
