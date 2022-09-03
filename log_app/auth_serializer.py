@@ -33,7 +33,7 @@ class UserRegSerializer(serializers.ModelSerializer):
     # password2 = serializers.CharField(write_only=True,required=True)
     class Meta:
         model = MyUser
-        fields = ('username','email','first_name','last_name','petrol_station','password','password2')
+        fields = ('username','email','first_name','last_name','petrol_station')
     
     def create(self, validated_data):
         user = MyUser(
