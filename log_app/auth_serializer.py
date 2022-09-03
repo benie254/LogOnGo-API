@@ -40,12 +40,17 @@ class UserRegSerializer(serializers.ModelSerializer):
             'username': {'required': True},
             'petrol_station': {'required': True},
         }
-    def validate(self, attrs):
+    def validate(self, attrs, data):
+        email = data.get('email', None)
+        if email is None:
+            raise serializers.ValidationError('An email address is required to register.')
+
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError(
                 {"password": "Please match the password fields."}
             )
         return attrs 
+        
     def validate_email(self,value: str) -> tuple[bool, str]:
         valid, error_text = email_is_valid(value)
         if not valid:
@@ -81,7 +86,6 @@ class UserRegSerializer(serializers.ModelSerializer):
         return user 
 
 class LoginSerializer(serializers.ModelSerializer[MyUser]):
-    email = serializers.EmailField(max_length=255)
     username = serializers.CharField(max_length=255, read_only=True)
     password = serializers.CharField(max_length=128, write_only=True)
     is_staff = serializers.BooleanField(read_only=True)
@@ -90,28 +94,26 @@ class LoginSerializer(serializers.ModelSerializer[MyUser]):
 
     def get_tokens(self, obj):  # type: ignore
         """Get user token."""
-        user = MyUser.objects.get(email=obj.email)
+        user = MyUser.objects.get(username=obj.username)
 
         return {'refresh': user.tokens['refresh'], 'access': user.tokens['access']}
 
     class Meta:
         model = MyUser
-        fields = ['email', 'username', 'password', 'tokens', 'is_staff']
+        fields = ['username', 'password', 'tokens', 'is_staff']
 
     def validate(self, data):  # type: ignore
         """Validate and return user login."""
-        email = data.get('email', None)
         password = data.get('password', None)
-        if email is None:
-            raise serializers.ValidationError('An email address is required to log in.')
+        username = data.get('username', None)
 
         if password is None:
             raise serializers.ValidationError('A password is required to log in.')
 
-        user = authenticate(username=email, password=password)
+        user = authenticate(username=username, password=password)
 
         if user is None:
-            raise serializers.ValidationError('A user with this email and password was not found.')
+            raise serializers.ValidationError('A user with this username and password was not found.')
 
         if not user.is_active:
             raise serializers.ValidationError('This user is not currently activated.')
