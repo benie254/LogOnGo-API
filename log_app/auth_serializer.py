@@ -28,13 +28,25 @@ class MyUserSerializer(serializers.ModelSerializer):
             'password':{'write_only':True}
         }   
 class UserRegSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True,validators=[UniqueValidator(queryset=MyUser.objects.all())])  
-    password = serializers.CharField(write_only=True,required=True,validators=[validate_password])
-    password2 = serializers.CharField(write_only=True,required=True)
+    # email = serializers.EmailField(required=True,validators=[UniqueValidator(queryset=MyUser.objects.all())])  
+    # password = serializers.CharField(write_only=True,required=True,validators=[validate_password])
+    # password2 = serializers.CharField(write_only=True,required=True)
     class Meta:
         model = MyUser
-        fields = ('username','email','first_name','last_name','petrol_station')
-        
+        fields = ('username','email','first_name','last_name','petrol_station','password','password2')
+    
+    def create(self, validated_data):
+        user = MyUser(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            first_name=validated_data['username'],
+            last_name=validated_data['username'],
+            petrol_station=validated_data['petrol_station']
+        )
+        user.set_password(validated_data['password'])
+        user.is_active = True
+        user.save()
+        return user
     # def validate(self, attrs, data):
     #     email = data.get('email', None)
     #     if email is None:
@@ -58,16 +70,16 @@ class UserRegSerializer(serializers.ModelSerializer):
     #         value = '@'.join([email_name, domain_part.lower()])
 
     #     return value
-    def create(self, validate_data):
-        user = MyUser.objects.create(
-            username = validate_data['username'],
-            email = validate_data['email'],
-            first_name = validate_data['first_name'],
-            last_name = validate_data['last_name'],
-            petrol_station = validate_data['petrol_station']
-        )
-        user.set_password(validate_data['password'])
-        user.save()
+    # def create(self, validate_data):
+    #     user = MyUser.objects.create(
+    #         username = validate_data['username'],
+    #         email = validate_data['email'],
+    #         first_name = validate_data['first_name'],
+    #         last_name = validate_data['last_name'],
+    #         petrol_station = validate_data['petrol_station']
+    #     )
+    #     user.set_password(validate_data['password'])
+    #     user.save()
         # user.refresh_from_db()
         # user.profile.username = validate_data['username']
         # user.profile.first_name = validate_data['first_name']
@@ -78,7 +90,7 @@ class UserRegSerializer(serializers.ModelSerializer):
         # user.refresh_from_db()
         # user.petrol_station.site_name = validate_data['petrol_station']
         # user.save()
-        return user 
+        # return user 
 
 class LoginSerializer(serializers.ModelSerializer[MyUser]):
     username = serializers.CharField(max_length=255, read_only=True)
