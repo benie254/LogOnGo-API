@@ -20,11 +20,6 @@ from rest_framework.request import Request
 
 from log_app.renderers import UserJSONRenderer
 
-import jwt
-from rest_framework_simplejwt.settings import api_settings
-jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-
 
 
 class ProfileDetails(APIView): 
@@ -55,23 +50,20 @@ class RegistrationAPIView(APIView):
     #     serializer.save()
     #     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            user = self.model.get(username=serializer.data['username'])
-            payload = jwt_payload_handler(user)
-            token = jwt_encode_handler(payload)
-            return Response(
-                token,
-                status=status.HTTP_201_CREATED,
-                headers=headers
-            )
-        else:
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST
-            )
+    def post(self, request):
+        user = request.data.get('user', {})
+        # def create(self, validated_data):
+        # # Use the `create_user` method we wrote earlier to create a new user.
+        #     return MyUser.objects.create_user(**validated_data)
+
+        # The create serializer, validate serializer, save serializer pattern
+        # below is common and you will see it a lot throughout this course and
+        # your own work later on. Get familiar with it.
+        serializer = self.serializer_class(data=user)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class LoginAPIView(APIView):

@@ -15,6 +15,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.conf import settings
 from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Create your models here.
 class MyAccountManager(BaseUserManager):
@@ -24,8 +25,15 @@ class MyAccountManager(BaseUserManager):
         """
         Create and save a user with the given username, email, and password.
         """
-        if not username:
-            raise ValueError("The given username must be set")
+        # if not username:
+        #     raise ValueError("The given username must be set")
+
+        # if username is None:
+        #     raise TypeError('Users must have a username.')
+
+        # if email is None:
+        #     raise TypeError('Users must have an email address.')
+
         email = self.normalize_email(email)
         # Lookup the real model class from the global app registry so this
         # manager method can be used in migrations. This is fine because
@@ -39,7 +47,7 @@ class MyAccountManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_user(self, username, email=None, password=None, **extra_fields):
+    def create_user(self, username=None, email=None, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
         return self._create_user(username, email, password, **extra_fields)
@@ -47,6 +55,9 @@ class MyAccountManager(BaseUserManager):
     def create_superuser(self, username, email=None, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
+
+        if password is None:
+            raise TypeError('Admins must have a password.')
 
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
@@ -82,45 +93,44 @@ class MyAccountManager(BaseUserManager):
             )
         return self.none()
 
-
-# A few helper functions for common logic between User and AnonymousUser.
-def _user_get_permissions(user, obj, from_name):
-    permissions = set()
-    name = "get_%s_permissions" % from_name
-    for backend in auth.get_backends():
-        if hasattr(backend, name):
-            permissions.update(getattr(backend, name)(user, obj))
-    return permissions
-
-
-def _user_has_perm(user, perm, obj):
-    """
-    A backend can raise `PermissionDenied` to short-circuit permission checking.
-    """
-    for backend in auth.get_backends():
-        if not hasattr(backend, "has_perm"):
-            continue
-        try:
-            if backend.has_perm(user, perm, obj):
-                return True
-        except PermissionDenied:
-            return False
-    return False
+    # A few helper functions for common logic between User and AnonymousUser.
+    def _user_get_permissions(user, obj, from_name):
+        permissions = set()
+        name = "get_%s_permissions" % from_name
+        for backend in auth.get_backends():
+            if hasattr(backend, name):
+                permissions.update(getattr(backend, name)(user, obj))
+        return permissions
 
 
-def _user_has_module_perms(user, app_label):
-    """
-    A backend can raise `PermissionDenied` to short-circuit permission checking.
-    """
-    for backend in auth.get_backends():
-        if not hasattr(backend, "has_module_perms"):
-            continue
-        try:
-            if backend.has_module_perms(user, app_label):
-                return True
-        except PermissionDenied:
-            return False
-    return False
+    def _user_has_perm(user, perm, obj):
+        """
+        A backend can raise `PermissionDenied` to short-circuit permission checking.
+        """
+        for backend in auth.get_backends():
+            if not hasattr(backend, "has_perm"):
+                continue
+            try:
+                if backend.has_perm(user, perm, obj):
+                    return True
+            except PermissionDenied:
+                return False
+        return False
+
+
+    def _user_has_module_perms(user, app_label):
+        """
+        A backend can raise `PermissionDenied` to short-circuit permission checking.
+        """
+        for backend in auth.get_backends():
+            if not hasattr(backend, "has_module_perms"):
+                continue
+            try:
+                if backend.has_module_perms(user, app_label):
+                    return True
+            except PermissionDenied:
+                return False
+        return False
 
 
 class MyUser(AbstractBaseUser,PermissionsMixin):
@@ -136,7 +146,7 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
         validators=[username_validator],
         error_messages={
             "unique": _("A user with that username already exists."),
-        },
+        }, blank=True, null=True
     )
     first_name = models.CharField(_("first name"), max_length=150,blank=True)
     last_name = models.CharField(_("last name"), max_length=150,blank=True)
@@ -162,7 +172,7 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ['email','first_name','last_name',"petrol_station"]
+    REQUIRED_FIELDS = []
 
 
     def clean(self):
@@ -184,10 +194,16 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
         """Send an email to this user."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
+    @receiver(post_save, sender=settings.AUTH_USER_MODEL)
+    def create_auth_token(sender, instance=None, created=False, **kwargs):
+        if created:
+            Token.objects.create(user=instance)
+
+    @property
+    def tokens(self) -> dict[str, str]:
+        """Allow us to get a user's token by calling `user.token`."""
+        refresh = RefreshToken.for_user(self)
+        return {'refresh': str(refresh), 'access': str(refresh.access_token)}
 
 # created upon successful registration
 class Profile(models.Model):

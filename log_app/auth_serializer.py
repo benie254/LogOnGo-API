@@ -28,37 +28,12 @@ class MyUserSerializer(serializers.ModelSerializer):
             'password':{'write_only':True}
         }   
 class UserRegSerializer(serializers.ModelSerializer):
-    # email = serializers.EmailField(required=True,validators=[UniqueValidator(queryset=MyUser.objects.all())])  
     # password = serializers.CharField(write_only=True,required=True,validators=[validate_password])
-    # password2 = serializers.CharField(write_only=True,required=True)
-    class Meta:
-        model = MyUser
-        fields = ('username','email',)
+    # class Meta:
+    #     model = MyUser
+    #     fields = ('username','email','first_name','last_name','petrol_station','password')
     
-    def create(self, validated_data):
-        user = MyUser(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            # first_name=validated_data['first_name'],
-            # last_name=validated_data['last_name'],
-            # petrol_station=validated_data['petrol_station']
-        )
-        user.set_password(validated_data['password'])
-        user.is_active = True
-        user.save()
-        return user
-    # def validate(self, attrs, data):
-    #     email = data.get('email', None)
-    #     if email is None:
-    #         raise serializers.ValidationError('An email address is required to register.')
-
-    #     if attrs['password'] != attrs['password2']:
-    #         raise serializers.ValidationError(
-    #             {"password": "Please match the password fields."}
-    #         )
-    #     return attrs 
-        
-    # def validate_email(self,value: str) -> tuple[bool, str]:
+    # def validate_email(self,value: str) -> str:
     #     valid, error_text = email_is_valid(value)
     #     if not valid:
     #         raise serializers.ValidationError(error_text)
@@ -68,31 +43,40 @@ class UserRegSerializer(serializers.ModelSerializer):
     #         pass
     #     else:
     #         value = '@'.join([email_name, domain_part.lower()])
-
     #     return value
-    # def create(self, validate_data):
-    #     user = MyUser.objects.create(
-    #         username = validate_data['username'],
-    #         email = validate_data['email'],
-    #         first_name = validate_data['first_name'],
-    #         last_name = validate_data['last_name'],
-    #         petrol_station = validate_data['petrol_station']
-    #     )
-    #     user.set_password(validate_data['password'])
-    #     user.save()
-        # user.refresh_from_db()
-        # user.profile.username = validate_data['username']
-        # user.profile.first_name = validate_data['first_name']
-        # user.profile.last_name = validate_data['last_name']
-        # user.profile.petrol_station = validate_data['petrol_station']
-        # user.profile.email = validate_data['email']
-        # user.save()
-        # user.refresh_from_db()
-        # user.petrol_station.site_name = validate_data['petrol_station']
-        # user.save()
-        # return user 
+
+    def create(self, data):
+        user = MyUser.objects.create_user(
+            email=data.get('email'),
+            username=data.get('username'),
+            password=data.get('password'),
+        )
+        user.first_name = data.get('first_name','')
+        user.last_name = data.get('last_name','')
+        user.petrol_station = data.get('petrol_station','')
+        user.save()
+        return user
+
+    # password = serializers.CharField(
+    #     max_length=128,
+    #     min_length=8,
+    #     write_only=True
+    # )
+
+    # The client should not be able to send a token along with a registration
+    # request. Making `token` read-only handles that for us.
+    # token = serializers.CharField(max_length=255, read_only=True)
+
+    class Meta:
+        model = MyUser
+        # List all of the fields that could possibly be included in a request
+        # or response, including fields specified explicitly above.
+        fields = ['email','username', 'first_name', 'last_name', 'petrol_station']
+
+    
 
 class LoginSerializer(serializers.ModelSerializer[MyUser]):
+    email = serializers.EmailField(max_length=255)
     username = serializers.CharField(max_length=255, read_only=True)
     password = serializers.CharField(max_length=128, write_only=True)
     is_staff = serializers.BooleanField(read_only=True)
@@ -101,23 +85,27 @@ class LoginSerializer(serializers.ModelSerializer[MyUser]):
 
     def get_tokens(self, obj):  # type: ignore
         """Get user token."""
-        user = MyUser.objects.get(username=obj.username)
+        user = MyUser.objects.get(email=obj.email)
 
         return {'refresh': user.tokens['refresh'], 'access': user.tokens['access']}
 
     class Meta:
         model = MyUser
-        fields = ['username', 'password', 'tokens', 'is_staff']
+        fields = ['email','username', 'password', 'tokens', 'is_staff']
 
     def validate(self, data):  # type: ignore
         """Validate and return user login."""
         password = data.get('password', None)
+        email = data.get('email', None)
         username = data.get('username', None)
+
+        if email is None:
+            raise serializers.ValidationError('An email address is required to log in.')
 
         if password is None:
             raise serializers.ValidationError('A password is required to log in.')
 
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=username, email=email, password=password)
 
         if user is None:
             raise serializers.ValidationError('A user with this username and password was not found.')
