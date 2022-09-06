@@ -146,13 +146,15 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
         validators=[username_validator],
         error_messages={
             "unique": _("A user with that username already exists."),
-        }, blank=True, null=True
+        }
     )
-    first_name = models.CharField(_("first name"), max_length=150,blank=True)
-    last_name = models.CharField(_("last name"), max_length=150,blank=True)
+    first_name = models.CharField(_("first name"), max_length=150)
+    last_name = models.CharField(_("last name"), max_length=150)
     CHOICES = (('Station-Kisii','Station-Kisii'),('Station-Nairobi','Station-Nairobi'))
-    petrol_station = models.CharField(_("petrol station"), max_length=150,choices=CHOICES,blank=True)
-    email = models.EmailField(_("email address"), blank=True)
+    petrol_station = models.CharField(_("petrol station"), max_length=150,choices=CHOICES)
+    email = models.EmailField(_("email address"))
+    IDS = ((12345,12345),(67891,67891),(102030,102030),(405060,405060),(708090,708090))
+    employee_id = models.PositiveIntegerField(choices=IDS,unique=True)
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
@@ -172,7 +174,7 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['email','first_name','last_name',"petrol_station"]
 
 
     def clean(self):
