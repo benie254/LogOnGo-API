@@ -5,7 +5,7 @@ from log_app.models import MyUser
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'petrol_station', 'password']
+        fields = ['id', 'employee_id', 'username', 'email', 'first_name', 'last_name', 'petrol_station', 'password']
         extra_kwargs = {
             'password': {'write_only': True}
         }

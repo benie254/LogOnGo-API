@@ -26,10 +26,10 @@ class LoginView(APIView):
     renderer_classes = (UserJSONRenderer)
     def post(self, request):
         email = request.data['email']
-        username = request.data['username']
+        employee_id = request.data['employee_id']
         password = request.data['password']
 
-        user = MyUser.objects.filter(email=email,username=username).first()
+        user = MyUser.objects.filter(email=email,employee_id=employee_id).first()
 
         if user is None:
             raise AuthenticationFailed('User not found!')
