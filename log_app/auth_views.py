@@ -1,121 +1,79 @@
-from typing import Any
-from django.shortcuts import get_object_or_404, render,redirect 
-from django.contrib.auth.models import User 
-from django.http import Http404 
-
-from rest_framework import status, generics 
-from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import AllowAny
-from log_app.auth_serializer import LoginSerializer, LogoutSerializer, UserSerializer
-
-from log_app.auth_serializer import MyUserSerializer,UserRegSerializer
+from rest_framework.response import Response
+from rest_framework.exceptions import AuthenticationFailed
+from log_app.serializer import UserSerializer
 from log_app.models import MyUser
-
-from rest_framework import status
-from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.request import Request
-
-from log_app.renderers import UserJSONRenderer
+import jwt, datetime
+from rest_framework.generics import CreateAPIView
+from rest_framework import permissions
+from django.core.mail import send_mail
 
 
-
-class ProfileDetails(APIView): 
-    authentication_classes = (TokenAuthentication)
-    permission_classes = (AllowAny)
-    
-    def get_profile_details(self,request):
-        try:
-            return MyUser.objects.all().filter(pk=request.user.id) 
-        except MyUser.DoesNotExist:
-            return Http404
-    
-    def get(self, request, format=None, **kwargs):
-        profile_details = MyUser.objects.all().filter(pk=request.user.id)
-        serializers = MyUserSerializer(profile_details,many=False)
-        return Response(serializers.data) 
-
-class RegistrationAPIView(APIView):
-    permission_classes = (AllowAny,)
-    renderer_classes = (UserJSONRenderer,)
-    serializer_class = UserRegSerializer
-
-    # def post(self, request: Request) -> Response:
-    #     """Return user response after a successful registration."""
-    #     user_request = request.data.get('user', {})
-    #     serializer = self.serializer_class(data=user_request)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+# Create your views here.
+class RegisterView(APIView):
     def post(self, request):
-        user = request.data.get('user', {})
-        # def create(self, validated_data):
-        # # Use the `create_user` method we wrote earlier to create a new user.
-        #     return MyUser.objects.create_user(**validated_data)
-
-        # The create serializer, validate serializer, save serializer pattern
-        # below is common and you will see it a lot throughout this course and
-        # your own work later on. Get familiar with it.
-        serializer = self.serializer_class(data=user)
+        serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        email=serializer.validated_data['email']
         serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class LoginAPIView(APIView):
-    permission_classes = (AllowAny,)
-    renderer_classes = (UserJSONRenderer,)
-    serializer_class = LoginSerializer
-
-    def post(self, request: Request) -> Response:
-        """Return user after login."""
-        user = request.data.get('user', {})
-
-        serializer = self.serializer_class(data=user)
-        if not serializer.is_valid():
-            print(serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        send_mail('Welcome', 'Good to have you on board', 'davinci.monalissa@gmail.com', [email], fail_silently=False)
+        return Response(serializer.data)
 
 
-class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
-    permission_classes = (IsAuthenticated,)
-    renderer_classes = (UserJSONRenderer,)
-    serializer_class = UserSerializer
+class LoginView(APIView):
+    def post(self, request):
+        email = request.data['email']
+        username = request.data['username']
+        password = request.data['password']
 
-    def retrieve(self, request: Request, *args: dict[str, Any], **kwargs: dict[str, Any]) -> Response:
-        """Return user on GET request."""
-        serializer = self.serializer_class(request.user, context={'request': request})
+        user = MyUser.objects.filter(email=email,username=username).first()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if user is None:
+            raise AuthenticationFailed('User not found!')
 
-    def update(self, request: Request, *args: dict[str, Any], **kwargs: dict[str, Any]) -> Response:
-        """Return updated user."""
-        serializer_data = request.data.get('user', {})
+        if not user.check_password(password):
+            raise AuthenticationFailed('Incorrect password!')
 
-        serializer = self.serializer_class(
-            request.user, data=serializer_data, partial=True, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        payload = {
+            'id': user.id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+            'iat': datetime.datetime.utcnow()
+        }
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        token = jwt.encode(payload, 'secret', algorithm='HS256')
+
+        response = Response()
+
+        response.set_cookie(key='jwt', value=token, httponly=True)
+        response.data = {
+            'jwt': token
+        }
+        return response
 
 
-class LogoutAPIView(APIView):
-    serializer_class = LogoutSerializer
+class UserView(APIView):
 
-    permission_classes = (IsAuthenticated,)
+    def get(self, request):
+        token = request.COOKIES.get('jwt')
 
-    def post(self, request: Request) -> Response:
-        """Validate token and save."""
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if not token:
+            raise AuthenticationFailed('Unauthenticated!')
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed('Unauthenticated!')
+
+        user = MyUser.objects.filter(id=payload['id']).first()
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+
+class LogoutView(APIView):
+    def post(self, request):
+        response = Response()
+        response.delete_cookie('jwt')
+        response.data = {
+            'message': 'success'
+        }
+        return response
