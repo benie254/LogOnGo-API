@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
+from log_app.renderers import UserJSONRenderer
 from log_app.serializer import UserSerializer
 from log_app.models import MyUser
 import jwt, datetime
@@ -11,6 +12,7 @@ from django.core.mail import send_mail
 
 # Create your views here.
 class RegisterView(APIView):
+    renderer_classes = (UserJSONRenderer)
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -21,6 +23,7 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    renderer_classes = (UserJSONRenderer)
     def post(self, request):
         email = request.data['email']
         username = request.data['username']
@@ -52,7 +55,7 @@ class LoginView(APIView):
 
 
 class UserView(APIView):
-
+    renderer_classes = (UserJSONRenderer)
     def get(self, request):
         token = request.COOKIES.get('jwt')
 
