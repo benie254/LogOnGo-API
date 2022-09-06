@@ -12,6 +12,8 @@ import datetime as dt
 from django.db.models import Sum
 from django.contrib import messages
 
+from django.db.models import Max, Min,F, ExpressionWrapper, PositiveIntegerField
+
 from log_app.models import Announcement, Contact, Incident, Log, LogMpesa
 
 # Create your views here.
@@ -145,8 +147,30 @@ class TodayFuelLogs(APIView):
 
     def get(self, request, id, format=None):
         today = dt.date.today()
-        today_fuel_logs = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
-        serializers = LogSerializer(today_fuel_logs,many=False)
+        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
+        today_fuel_log.total_litres_sold = ExpressionWrapper(F('eod_reading_yesterday')-F('eod_reading_lts'),output_field=PositiveIntegerField())
+        today_fuel_log.save()
+        today_fuel_log.refresh_from_db()
+        total_sold = today_fuel_log.total_litres_sold
+        petrol_received = FuelReceived.objects.all().filter(fuel_id=1).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        yesterday = today - dt.timedelta(days=1)
+        yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).first()
+        if today_fuel_log.balance and petrol_received:
+            petrol_amount = petrol_received
+            today_fuel_log.updated_balance = ExpressionWrapper(F('balance')+((petrol_amount)),output_field=PositiveIntegerField())
+            today_fuel_log.save()
+            today_fuel_log.refresh_from_db()              
+        elif yesterday_petrol_logs:
+            yesterday_bal = yesterday_petrol_logs.balance
+            today_fuel_log.balance = (yesterday_bal)-(total_sold)
+            today_fuel_log.save()
+            today_fuel_log.refresh_from_db() 
+        elif today_fuel_log.updated_balance and petrol_received:
+            petrol_amount = petrol_received
+            today_fuel_log.updated_balance = ExpressionWrapper(F('updated_balance')+((petrol_amount)),output_field=PositiveIntegerField())
+            today_fuel_log.save(update_fields=['updated_balance'])
+            today_fuel_log.refresh_from_db()       
+        serializers = LogSerializer(today_fuel_log,many=False)
         return Response(serializers.data)
 
 class TodayFuelLogsTwo(APIView):
@@ -322,6 +346,29 @@ class LogDetails(APIView):
     
     def get(self, request, id, format=None):
         log_details = Log.objects.all().filter(pk=id).first()
+        today = dt.date.today()
+        log_details.total_litres_sold = ExpressionWrapper(F('eod_reading_yesterday')-F('eod_reading_lts'),output_field=PositiveIntegerField())
+        log_details.save()
+        log_details.refresh_from_db()
+        total_sold = log_details.total_litres_sold
+        petrol_received = FuelReceived.objects.all().filter(fuel_id=1).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        yesterday = today - dt.timedelta(days=1)
+        yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).first()
+        if log_details.balance and petrol_received:
+            petrol_amount = petrol_received
+            log_details.updated_balance = ExpressionWrapper(F('balance')+((petrol_amount)),output_field=PositiveIntegerField())
+            log_details.save()
+            log_details.refresh_from_db()              
+        elif yesterday_petrol_logs:
+            yesterday_bal = yesterday_petrol_logs.balance
+            log_details.balance = (yesterday_bal)-(total_sold)
+            log_details.save()
+            log_details.refresh_from_db() 
+        elif log_details.updated_balance and petrol_received:
+            petrol_amount = petrol_received
+            log_details.updated_balance = ExpressionWrapper(F('updated_balance')+((petrol_amount)),output_field=PositiveIntegerField())
+            log_details.save(update_fields=['updated_balance'])
+            log_details.refresh_from_db() 
         serializers = LogSerializer(log_details,many=False)
         return Response(serializers.data)
 
