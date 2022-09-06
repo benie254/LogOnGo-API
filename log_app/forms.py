@@ -57,7 +57,7 @@ class UserChangeForm(forms.ModelForm):
 class MyRegForm(RegistrationForm):
     class Meta:
         model = MyUser
-        fields = ('username','first_name','last_name','email','petrol_station')
+        fields = ('username','employee_id','first_name','last_name','email','petrol_station')
 
 
 class MyLoginForm(AuthenticationForm):
