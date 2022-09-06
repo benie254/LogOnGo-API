@@ -2,8 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
 from log_app.renderers import UserJSONRenderer
-from log_app.serializer import UserSerializer
 from log_app.models import MyUser
+from log_app.auth_serializer import UserSerializer
 import jwt, datetime
 from rest_framework.generics import CreateAPIView
 from rest_framework import permissions

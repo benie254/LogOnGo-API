@@ -16,7 +16,6 @@ from django.template.loader import render_to_string
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 
-from log_app.utils import validate_email as email_is_valid
 
 class FuelSerializer(serializers.ModelSerializer):
     class Meta:
