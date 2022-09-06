@@ -20,13 +20,8 @@ from log_app import auth_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('log_app.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/token/blacklist/', TokenBlacklistView.as_view(), name='token_blacklist'),
-    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-
-    path('register/', auth_views.RegistrationAPIView.as_view(), name='register_user'),
-    path('login/', auth_views.LoginAPIView.as_view(), name='login_user'),
-    path('logout/', auth_views.LogoutAPIView.as_view(), name="logout_user"),
-    path('user-update/', auth_views.UserRetrieveUpdateAPIView.as_view(), name='user'),
+    path('register', auth_views.RegisterView.as_view()),
+    path('login', auth_views.LoginView.as_view()),
+    path('user', auth_views.UserView.as_view()),
+    path('logout', auth_views.LogoutView.as_view()),
 ]
