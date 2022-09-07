@@ -174,7 +174,7 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ['email','first_name','last_name',"petrol_station"]
+    REQUIRED_FIELDS = ['email','employee_id','first_name','last_name',"petrol_station"]
 
 
     def clean(self):

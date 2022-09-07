@@ -12,7 +12,7 @@ from django.core.mail import send_mail
 
 # Create your views here.
 class RegisterView(APIView):
-    renderer_classes = (UserJSONRenderer)
+    # renderer_classes = (UserJSONRenderer)
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -23,7 +23,7 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
-    renderer_classes = (UserJSONRenderer)
+    # renderer_classes = (UserJSONRenderer)
     def post(self, request):
         email = request.data['email']
         employee_id = request.data['employee_id']
@@ -55,7 +55,7 @@ class LoginView(APIView):
 
 
 class UserView(APIView):
-    renderer_classes = (UserJSONRenderer)
+    # renderer_classes = (UserJSONRenderer)
     def get(self, request):
         token = request.COOKIES.get('jwt')
 
