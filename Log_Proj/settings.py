@@ -98,7 +98,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:8000',
     'http://localhost:4200',
     'http://127.0.0.1:8000',
-    'https://logongo-api.herokuapp.com',
+    'https://logongo.herokuapp.com',
 )
 
 MIDDLEWARE = [
