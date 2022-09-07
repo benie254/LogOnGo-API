@@ -16,8 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView,TokenBlacklistView,TokenVerifyView,)
-from log_app import auth_views 
+from log_app import auth_views, views 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('',views.home,name='home'),
     path('api/',include('log_app.urls')),
 ]

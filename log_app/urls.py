@@ -4,7 +4,6 @@ from log_app import views, api_views, auth_views
 
 
 urlpatterns = [
-    path('',views.home,name='home'),
     url(r'^register/$', auth_views.RegisterView.as_view()),
     url(r'^login/$', auth_views.LoginView.as_view()),
     url(r'^user/$', auth_views.UserView.as_view()),
