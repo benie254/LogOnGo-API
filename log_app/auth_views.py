@@ -8,9 +8,22 @@ import jwt, datetime
 from rest_framework.generics import CreateAPIView
 from rest_framework import permissions
 from django.core.mail import send_mail
+from django.http import Http404
 
 
 # Create your views here.
+class UserProfiles(APIView):
+    def get_all_users(self):
+        try:
+            return MyUser.objects.all()
+        except MyUser.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        user_profiles = MyUser.objects.all()
+        serializers = UserSerializer(user_profiles,many=True)
+        return Response(serializers.data)
+
 class RegisterView(APIView):
     # renderer_classes = (UserJSONRenderer)
     def post(self, request):
