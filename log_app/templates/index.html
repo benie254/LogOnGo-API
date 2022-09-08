@@ -28,11 +28,9 @@
 
     <ul>
         <p>Our endpoints:</p>
-        {% for u in users %}
         <li>
-            <a href="{% url 'all_users' u.id %}">All users</a>
+            <a href="{% url 'all_users' %}">All users</a>
         </li>
-        {% endfor %}
         <li>
             <a href="{% url 'our_fuels' %}">Our fuels</a>
         </li>
