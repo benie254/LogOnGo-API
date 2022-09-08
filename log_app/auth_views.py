@@ -10,6 +10,7 @@ from rest_framework.generics import CreateAPIView
 from rest_framework import permissions
 from django.core.mail import send_mail
 from django.http import Http404
+import os
 
 
 # Create your views here.
@@ -33,6 +34,13 @@ class RegisterView(APIView):
         username=serializer.validated_data['username']
         receiver=serializer.validated_data['email']
         serializer.save()
+        # send_mail(
+        #     'Testing sendrid',
+        #     'Here is the message.',
+        #     'davinci.monalissa@gmail.com',
+        #     [receiver],
+        #     fail_silently=False,
+        # )
         send_welcome_email(username,receiver)
         return Response(serializer.data)
 

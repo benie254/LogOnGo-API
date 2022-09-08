@@ -86,6 +86,7 @@ AUTH_USER_MODEL = 'log_app.MyUser'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
+SENDGRID_API_KEY = config('SENDGRID_API_KEY')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS') 
 EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
