@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
+from log_app.email import send_welcome_email
 from log_app.renderers import UserJSONRenderer
 from log_app.models import MyUser
 from log_app.auth_serializer import UserSerializer
@@ -29,9 +30,10 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email=serializer.validated_data['email']
+        username=serializer.validated_data['username']
+        receiver=serializer.validated_data['email']
         serializer.save()
-        send_mail('Welcome', 'Good to have you on board', 'davinci.monalissa@gmail.com', [email], fail_silently=False)
+        send_welcome_email(username,receiver)
         return Response(serializer.data)
 
 
