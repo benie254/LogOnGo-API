@@ -4,11 +4,11 @@ from log_app import views, api_views, auth_views
 
 
 urlpatterns = [
-    url(r'^all-users/$',auth_views.UserProfiles.as_view()),
-    url(r'^register/$', auth_views.RegisterView.as_view()),
-    url(r'^login/$', auth_views.LoginView.as_view()),
-    url(r'^user/$', auth_views.UserView.as_view()),
-    url(r'^logout/$', auth_views.LogoutView.as_view()),
+    url(r'^all-users/$',auth_views.UserProfiles.as_view(),name="all_users"),
+    url(r'^register/$', auth_views.RegisterView.as_view(),name="register"),
+    url(r'^login/$', auth_views.LoginView.as_view(),name="login"),
+    url(r'^user/$', auth_views.UserView.as_view(),name="user"),
+    url(r'^logout/$', auth_views.LogoutView.as_view(),name="logout"),
     url(r'^our-fuels/$', api_views.RegisteredFuels.as_view(),name='our_fuels'),
     url(r'^diesel-info/$', api_views.DieselInfo.as_view(),name='diesel_info'),
     url(r'^gas-info/$', api_views.GasInfo.as_view(),name='gas_info'),

@@ -30,7 +30,7 @@
         <p>Our endpoints:</p>
         {% for u in users %}
         <li>
-            <a href="{% url 'profile_details' u.id %}">Profile details</a>
+            <a href="{% url 'all_users' u.id %}">All users</a>
         </li>
         {% endfor %}
         <li>
