@@ -36,22 +36,22 @@ class RegisterView(APIView):
         username=serializer.validated_data['username']
         receiver=serializer.validated_data['email']
         serializer.save()
-        sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-        msg = "Nice to have you on board LogOnGo. Let's get to work!</p> <br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
-        message = Mail(
-            from_email = Email("davinci.monalissa@gmail.com"),
-            to_emails = receiver,
-            subject = "You're in!",
-            html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
-        )
-        try:
-            sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
-            response = sendgrid_client.send(message)
-            print(response.status_code)
-            print(response.body)
-            print(response.headers)
-        except Exception as e:
-            print(e)
+        # sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+        # msg = "Nice to have you on board LogOnGo. Let's get to work!</p> <br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+        # message = Mail(
+        #     from_email = Email("davinci.monalissa@gmail.com"),
+        #     to_emails = receiver,
+        #     subject = "You're in!",
+        #     html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
+        # )
+        # try:
+        #     sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+        #     response = sendgrid_client.send(message)
+        #     print(response.status_code)
+        #     print(response.body)
+        #     print(response.headers)
+        # except Exception as e:
+        #     print(e)
         # content = Content("text/plain", "and easy to do anywhere, even with Python")
         # mail = Mail(from_email, to_email, subject, content)
 
