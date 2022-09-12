@@ -161,6 +161,9 @@ class TodayFuelLogs(APIView):
             today_fuel_log.save()
             today_fuel_log.refresh_from_db()              
         elif yesterday_petrol_logs:
+            eod_yesterday = yesterday_petrol_logs.eod_reading_lts
+            today_fuel_log.eod_reading_yesterday = eod_yesterday
+            today_fuel_log.save()
             yesterday_bal = yesterday_petrol_logs.balance
             today_fuel_log.balance = (yesterday_bal)-(total_sold)
             today_fuel_log.save()

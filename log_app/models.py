@@ -153,7 +153,7 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
     CHOICES = (('Station-Kisii','Station-Kisii'),('Station-Nairobi','Station-Nairobi'))
     petrol_station = models.CharField(_("petrol station"), max_length=150,choices=CHOICES)
     email = models.EmailField(_("email address"))
-    IDS = ((12345,12345),(67891,67891),(102030,102030),(405060,405060),(708090,708090))
+    IDS = ((12345,12345),(67891,67891),(102030,102030),(405060,405060),(708090,708090),(112233,112233),(445566,445566),(778899,778899),(101010,101010),(202020,202020),(303030,303030),(404040,404040),(505050,505050))
     employee_id = models.PositiveIntegerField(choices=IDS,unique=True)
     is_staff = models.BooleanField(
         _("staff status"),
@@ -233,7 +233,7 @@ def update_petrol_station_signal(sender, instance, created, **kwargs):
 
 class Fuel(models.Model):
     CHOICES = (('Petrol','Petrol'),('Diesel','Diesel'),('Gas','Gas'))
-    fuel_type = models.CharField(max_length=60,choices=CHOICES,null=True,blank=True)
+    fuel_type = models.CharField(max_length=60,choices=CHOICES)
     price_per_litre = models.IntegerField()
     pumps = models.PositiveIntegerField()
     initial_litres_in_tank = models.IntegerField()
@@ -242,15 +242,15 @@ class Fuel(models.Model):
         return self.price_per_litre
 
 class Log(models.Model):
-    date = models.DateField(default=timezone.now,null=True,blank=True)
+    date = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     eod_reading_lts = models.DecimalField(max_digits=19,decimal_places=2)
-    eod_reading_yesterday = models.DecimalField(max_digits=19,decimal_places=2,blank=True)
-    total_litres_sold = models.DecimalField(max_digits=18,decimal_places=2,blank=True)
-    balance = models.DecimalField(max_digits=18,decimal_places=2,blank=True)
-    updated_balance = models.DecimalField(max_digits=18,decimal_places=2,blank=True)
-    balance_yesterday = models.DecimalField(max_digits=18,decimal_places=2,blank=True)
-    first_logged = models.DateTimeField(auto_now_add=True,null=True)
+    eod_reading_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
+    total_litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    updated_balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    balance_yesterday = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
     user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
