@@ -148,31 +148,44 @@ class TodayFuelLogs(APIView):
     def get(self, request, id, format=None):
         today = dt.date.today()
         today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
-        today_fuel_log.total_litres_sold = ExpressionWrapper(F('eod_reading_yesterday')-F('eod_reading_lts'),output_field=PositiveIntegerField())
-        today_fuel_log.save()
-        today_fuel_log.refresh_from_db()
-        total_sold = today_fuel_log.total_litres_sold
         petrol_received = FuelReceived.objects.all().filter(fuel_id=1).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
         yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).first()
-        if today_fuel_log.balance and petrol_received:
-            petrol_amount = petrol_received
-            today_fuel_log.updated_balance = ExpressionWrapper(F('balance')+((petrol_amount)),output_field=PositiveIntegerField())
+        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
+        if today_fuel_log and petrol_info:
+            petrol_pp = petrol_info.price_per_litre
+            today_fuel_log.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=PositiveIntegerField())
             today_fuel_log.save()
-            today_fuel_log.refresh_from_db()              
-        elif yesterday_petrol_logs:
-            eod_yesterday = yesterday_petrol_logs.eod_reading_lts
-            today_fuel_log.eod_reading_yesterday = eod_yesterday
+            total_sold = today_fuel_log.total_litres_sold
+            today_fuel_log.amount_earned_today = ExpressionWrapper((total_sold) * (petrol_pp),output_field=PositiveIntegerField())
             today_fuel_log.save()
-            yesterday_bal = yesterday_petrol_logs.balance
-            today_fuel_log.balance = (yesterday_bal)-(total_sold)
-            today_fuel_log.save()
-            today_fuel_log.refresh_from_db() 
-        elif today_fuel_log.updated_balance and petrol_received:
-            petrol_amount = petrol_received
-            today_fuel_log.updated_balance = ExpressionWrapper(F('updated_balance')+((petrol_amount)),output_field=PositiveIntegerField())
-            today_fuel_log.save(update_fields=['updated_balance'])
-            today_fuel_log.refresh_from_db()       
+            today_fuel_log.refresh_from_db()
+            if yesterday_petrol_logs:
+                eod_yesterday = yesterday_petrol_logs.eod_reading_lts
+                today_fuel_log.eod_reading_yesterday = eod_yesterday
+                today_fuel_log.save()
+                bal_yesterday = yesterday_petrol_logs.balance
+                today_fuel_log.balance_yesterday = bal_yesterday
+                today_fuel_log.save()
+                yesterday_bal = today_fuel_log.balance_yesterday
+                today_fuel_log.balance = (yesterday_bal)-(total_sold)
+                today_fuel_log.save()
+                today_fuel_log.refresh_from_db()
+                bal = today_fuel_log.balance 
+            else:
+                init = petrol_info.initial_litres_in_tank
+                today_fuel_log.balance = (init) - (total_sold)
+                bal = today_fuel_log.balance 
+            if bal and petrol_received:
+                petrol_amount = petrol_received
+                today_fuel_log.updated_balance = ExpressionWrapper(F('balance')+((petrol_received)),output_field=PositiveIntegerField())
+                today_fuel_log.save()
+                today_fuel_log.refresh_from_db()              
+            elif today_fuel_log.updated_balance and petrol_received:
+                petrol_amount = petrol_received
+                today_fuel_log.updated_balance = ExpressionWrapper(F('updated_balance')+((petrol_amount)),output_field=PositiveIntegerField())
+                today_fuel_log.save(update_fields=['updated_balance'])
+                today_fuel_log.refresh_from_db()       
         serializers = LogSerializer(today_fuel_log,many=False)
         return Response(serializers.data)
 

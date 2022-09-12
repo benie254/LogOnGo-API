@@ -247,6 +247,7 @@ class Log(models.Model):
     eod_reading_lts = models.DecimalField(max_digits=19,decimal_places=2)
     eod_reading_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
     total_litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True)
     balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
     updated_balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
     balance_yesterday = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
