@@ -135,8 +135,7 @@ class MyAccountManager(BaseUserManager):
 
 class MyUser(AbstractBaseUser,PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
-    id = models.IntegerField(primary_key=True)
-
+    
     username = models.CharField(
         _("username"),
         max_length=60,
