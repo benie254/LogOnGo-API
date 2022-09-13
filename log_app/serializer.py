@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, PetrolStation
+from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Site
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.validators import UniqueValidator

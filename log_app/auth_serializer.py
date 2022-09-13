@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from log_app.models import MyUser
+from log_app.models import MyUser, Site, Profile, Site
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -17,3 +17,13 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile 
+        fields = ('id','first_name','last_name','username','email')
+
+class PetrolStationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Site
+        fields = ('id','user_id','petrol_station')
