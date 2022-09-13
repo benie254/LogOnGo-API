@@ -255,7 +255,7 @@ class Log(models.Model):
     balance_yesterday = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
     first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
-    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
+    user_id = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
     site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
 

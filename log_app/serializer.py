@@ -25,7 +25,7 @@ class FuelSerializer(serializers.ModelSerializer):
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log 
-        fields = ('id','fuel','date','eod_reading_lts','eod_reading_yesterday','total_litres_sold','amount_earned_today','balance','updated_balance','balance_yesterday','first_logged','last_edited','user','logged_by',)
+        fields = ('id','fuel','date','eod_reading_lts','eod_reading_yesterday','total_litres_sold','amount_earned_today','balance','updated_balance','balance_yesterday','first_logged','last_edited','user_id','logged_by',)
 
 class LogMpesaSerializer(serializers.ModelSerializer):
     class Meta:
