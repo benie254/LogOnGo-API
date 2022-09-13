@@ -159,6 +159,13 @@ class TodayFuelLogs(APIView):
             total_sold = today_fuel_log.total_litres_sold
             today_fuel_log.amount_earned_today = ExpressionWrapper((total_sold) * (petrol_pp),output_field=PositiveIntegerField())
             today_fuel_log.save()
+            user = request.user 
+            user_id = user.id
+            username = user.username 
+            today_fuel_log.logged_by = username 
+            today_fuel_log.save()
+            today_fuel_log.user_id = user_id
+            today_fuel_log.save()
             today_fuel_log.refresh_from_db()
             if yesterday_petrol_logs:
                 eod_yesterday = yesterday_petrol_logs.eod_reading_lts
