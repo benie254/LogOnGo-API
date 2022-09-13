@@ -135,6 +135,7 @@ class MyAccountManager(BaseUserManager):
 
 class MyUser(AbstractBaseUser,PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
+    id = models.IntegerField(primary_key=True)
 
     username = models.CharField(
         _("username"),
@@ -236,9 +237,9 @@ def update_site_signal(sender, instance, created, **kwargs):
 class Fuel(models.Model):
     CHOICES = (('Petrol','Petrol'),('Diesel','Diesel'),('Gas','Gas'))
     fuel_type = models.CharField(max_length=60,choices=CHOICES)
-    price_per_litre = models.IntegerField()
+    price_per_litre = models.DecimalField(max_digits=5,decimal_places=2)
     pumps = models.PositiveIntegerField()
-    initial_litres_in_tank = models.IntegerField()
+    initial_litres_in_tank = models.DecimalField(max_digits=8,decimal_places=2)
 
     def __int__(self):
         return self.price_per_litre
