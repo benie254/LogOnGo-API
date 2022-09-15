@@ -6,6 +6,7 @@ from log_app import views, api_views, auth_views
 urlpatterns = [
     url(r'^stations/$',auth_views.AllUserStations.as_view(),name="stations"),
     url(r'^profiles/$',auth_views.AllProfiles.as_view(),name="profiles"),
+    url(r'^user-profile/$',auth_views.UserProfile.as_view(),name="user_profile"),
     url(r'^all-users/$',auth_views.UserProfiles.as_view(),name="all_users"),
     url(r'^register/$', auth_views.RegisterView.as_view(),name="register"),
     url(r'^login/$', auth_views.LoginView.as_view(),name="login"),

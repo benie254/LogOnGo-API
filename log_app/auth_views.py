@@ -16,6 +16,20 @@ from sendgrid.helpers.mail import *
 from decouple import config 
 
 # Create your views here.
+class UserProfile(APIView):
+    def get_user_profiles(self,request):
+        try:
+            user_id = request.user.id
+            return Profile.objects.all().filter(id=user_id)
+        except Profile.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        user_id = request.user.id
+        profiles = Profile.objects.all().filter(id=user_id)
+        serializers = UserProfileSerializer(profiles,many=False)
+        
+        return Response(serializers.data)
 class AllProfiles(APIView):
     def get_all_profiles(self):
         try:
