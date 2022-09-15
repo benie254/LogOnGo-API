@@ -164,10 +164,10 @@ class TodayFuelLogs(APIView):
             today_fuel_log.refresh_from_db()
             today_fuel_log.logged_by = request.user.username 
             today_fuel_log.save()
-            user_id = MyUser.objects.get(id=c_user_id)
-            today_fuel_log.user_id = user_id
-            today_fuel_log.save()
-            today_fuel_log.refresh_from_db()
+            # user_id = MyUser.objects.get(id=c_user_id)
+            # today_fuel_log.user_id = user_id
+            # today_fuel_log.save()
+            # today_fuel_log.refresh_from_db()
             if yesterday_petrol_logs:
                 eod_yesterday = yesterday_petrol_logs.eod_reading_lts
                 today_fuel_log.eod_reading_yesterday = eod_yesterday
