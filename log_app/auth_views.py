@@ -15,7 +15,7 @@ import sendgrid
 from sendgrid.helpers.mail import *
 from decouple import config 
 
-# Create your views here.
+# Create your views here.'
 class UserProfile(APIView):
     def get_user_profiles(self,request):
         try:
@@ -28,7 +28,7 @@ class UserProfile(APIView):
         user_id = request.user.id
         profiles = Profile.objects.all().filter(id=user_id)
         serializers = UserProfileSerializer(profiles,many=False)
-        
+
         return Response(serializers.data)
 class AllProfiles(APIView):
     def get_all_profiles(self):
