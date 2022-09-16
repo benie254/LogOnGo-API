@@ -15,6 +15,12 @@ import sendgrid
 from sendgrid.helpers.mail import *
 from decouple import config 
 
+from rest_framework import status
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from log_app.auth_serializer import UserLoginSerializer,UserRegistrationSerializer
+
 # Create your views here.'
 class UserProfile(APIView):
     def get_user_profiles(self,request):
@@ -31,6 +37,7 @@ class UserProfile(APIView):
 
         return Response(serializers.data)
 class AllProfiles(APIView):
+    permission_classes = (AllowAny,)
     def get_all_profiles(self):
         try:
             return Profile.objects.all()
@@ -68,8 +75,11 @@ class UserProfiles(APIView):
 
 class RegisterView(APIView):
     # renderer_classes = (UserJSONRenderer)
+    serializer_class = UserRegistrationSerializer
+    permission_classes = (AllowAny,)
+
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        serializer = UserRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         username=serializer.validated_data['username']
         receiver=serializer.validated_data['email']
@@ -98,6 +108,45 @@ class RegisterView(APIView):
             print(response.headers)
         except Exception as e:
             print(e)
+
+        status_code = status.HTTP_201_CREATED
+        response = {
+            'success' : 'True',
+            'status code' : status_code,
+            'message': 'User registered  successfully',
+            }
+        
+        return Response(response, status=status_code)
+    # def post(self, request):
+    #     serializer = UserSerializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     username=serializer.validated_data['username']
+    #     receiver=serializer.validated_data['email']
+    #     user = serializer.save()
+    #     user.refresh_from_db()
+    #     user.profile.first_name = serializer.validated_data['first_name']
+    #     user.profile.last_name = serializer.validated_data['last_name']
+    #     user.profile.username = serializer.validated_data['username']
+    #     user.profile.email = serializer.validated_data['email']
+    #     user.site.petrol_station = serializer.validated_data['petrol_station']
+    #         # user.is_active = False
+    #     user.save()
+    #     sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+    #     msg = "Nice to have you on board LogOnGo. Let's get to work!</p> <br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+    #     message = Mail(
+    #         from_email = Email("davinci.monalissa@gmail.com"),
+    #         to_emails = receiver,
+    #         subject = "You're in!",
+    #         html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
+    #     )
+    #     try:
+    #         sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+    #         response = sendgrid_client.send(message)
+    #         print(response.status_code)
+    #         print(response.body)
+    #         print(response.headers)
+    #     except Exception as e:
+    #         print(e)
         # content = Content("text/plain", "and easy to do anywhere, even with Python")
         # mail = Mail(from_email, subject, content,to_emails)
 
@@ -107,39 +156,26 @@ class RegisterView(APIView):
         # print(response.status_code)
         # print(response.headers)
         # send_welcome_email(username,receiver)
-        return Response(serializer.data)
+        # return Response(serializer.data)
 
 
 class LoginView(APIView):
-    # renderer_classes = (UserJSONRenderer)
+
+    permission_classes = (AllowAny,)
+    serializer_class = UserLoginSerializer
+
     def post(self, request):
-        email = request.data['email']
-        employee_id = request.data['employee_id']
-        password = request.data['password']
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        response = {
+            'success' : 'True',
+            'status code' : status.HTTP_200_OK,
+            'message': 'User logged in  successfully',
+            'token' : serializer.data['token'],
+            }
+        status_code = status.HTTP_200_OK
 
-        user = MyUser.objects.filter(email=email,employee_id=employee_id).first()
-
-        if user is None:
-            raise AuthenticationFailed('User not found!')
-
-        if not user.check_password(password):
-            raise AuthenticationFailed('Incorrect password!')
-
-        payload = {
-            'id': user.id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-            'iat': datetime.datetime.utcnow()
-        }
-
-        token = jwt.encode(payload, 'secret', algorithm='HS256')
-
-        response = Response()
-
-        response.set_cookie(key='jwt', value=token, httponly=True)
-        response.data = {
-            'jwt': token
-        }
-        return response
+        return Response(response, status=status_code)
 
 
 class UserView(APIView):
