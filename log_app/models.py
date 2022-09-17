@@ -215,7 +215,6 @@ class Profile(models.Model):
     username = models.CharField(max_length=100, blank=True)
     email = models.EmailField(max_length=150, blank=True)
     petrol_station = models.CharField(max_length=150,blank=True)
-    employee_id = models.PositiveIntegerField(unique=True, blank=True)
     signup_confirmation = models.BooleanField(default=False) 
 
 @receiver(post_save, sender=MyUser)

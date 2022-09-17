@@ -52,9 +52,9 @@ class UserLoginSerializer(serializers.Serializer):
     token = serializers.CharField(max_length=255, read_only=True)
 
     def validate(self, data):
-        email = data.get("email", None)
-        employee_id = data.get("employee_id", None)
-        password = data.get("password", None)
+        email = data.get("email")
+        employee_id = data.get("employee_id")
+        password = data.get("password")
         user = authenticate(email=email, employee_id=employee_id, password=password)
         if user is None:
             raise serializers.ValidationError(
@@ -77,7 +77,7 @@ class UserLoginSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile 
-        fields = ('id','first_name','last_name','username','email')
+        fields = ('id','first_name','last_name','username','email','petrol_station')
 
 class PetrolStationSerializer(serializers.ModelSerializer):
     class Meta:
