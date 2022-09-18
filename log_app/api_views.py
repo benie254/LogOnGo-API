@@ -15,7 +15,7 @@ from django.contrib import messages
 from django.db.models import Max, Min,F, ExpressionWrapper, DecimalField, PositiveIntegerField
 
 from log_app.models import Announcement, Contact, Incident, Log, LogMpesa
-from rest_framework.permissions import AllowAny,IsAuthenticated,
+from rest_framework.permissions import AllowAny,IsAuthenticated
 # Create your views here.
 class RegisteredFuels(APIView):
     permission_classes=(IsAuthenticated,)
