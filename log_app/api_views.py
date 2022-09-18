@@ -15,10 +15,10 @@ from django.contrib import messages
 from django.db.models import Max, Min,F, ExpressionWrapper, DecimalField, PositiveIntegerField
 
 from log_app.models import Announcement, Contact, Incident, Log, LogMpesa
-from rest_framework.permissions import AllowAny,IsAuthenticated
+from rest_framework.permissions import AllowAny,AllowAny
 # Create your views here.
 class RegisteredFuels(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_registered_fuels(self):
         try:
             return Fuel.objects.all()
@@ -31,7 +31,7 @@ class RegisteredFuels(APIView):
         return Response(serializers.data)
 
 class GasInfo(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_gas_info(self):
         try:
             return Fuel.objects.all().filter(fuel_type='Gas').last()
@@ -53,7 +53,7 @@ class GasInfo(APIView):
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DieselInfo(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_diesel_info(self):
         try:
             return Fuel.objects.all().filter(fuel_type='Diesel').last()
@@ -75,7 +75,7 @@ class DieselInfo(APIView):
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PetrolInfo(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_petrol_info(self):
         try:
             return Fuel.objects.all().filter(fuel_type='Petrol').last()
@@ -97,7 +97,7 @@ class PetrolInfo(APIView):
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AllLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_all_logs(self):
         try:
             return Log.objects.all()
@@ -110,7 +110,7 @@ class AllLogs(APIView):
         return Response(serializers.data)
 
 class TodayLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_today_logs(self):
         today = dt.date.today()
         try:
@@ -132,7 +132,7 @@ class TodayLogs(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_user_logs(self,id):
         try:
             return Log.objects.all().filter(user_id=id).order_by('-date')
@@ -145,7 +145,7 @@ class UserLogs(APIView):
         return Response(serializers.data)
 
 class TodayFuelLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_today_fuel_logs(self,id):
         today = dt.date.today()
         try:
@@ -206,7 +206,7 @@ class TodayFuelLogs(APIView):
         return Response(serializers.data)
 
 class TodayFuelLogsTwo(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_today_fuel_logs_two(self,id):
         today = dt.date.today()
         try:
@@ -221,7 +221,7 @@ class TodayFuelLogsTwo(APIView):
         return Response(serializers.data)
 
 class TodayFuelLogsThree(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_today_fuel_logs_three(self,id):
         today = dt.date.today()
         try:
@@ -236,7 +236,7 @@ class TodayFuelLogsThree(APIView):
         return Response(serializers.data)
 
 class TodayFuelLogsFour(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_today_fuel_logs_four(self, id):
         today = dt.date.today()
         try:
@@ -251,7 +251,7 @@ class TodayFuelLogsFour(APIView):
         return Response(serializers.data)
 
 class YesterdayFuelLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_yesterday_fuel_logs(self,id):
         today = dt.date.today()
         yesterday = today - dt.timedelta(days=1)
@@ -268,7 +268,7 @@ class YesterdayFuelLogs(APIView):
         return Response(serializers.data)
 
 class AllMpesaLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_all_mpesa_logs(self):
         try:
             return LogMpesa.objects.all()
@@ -281,7 +281,7 @@ class AllMpesaLogs(APIView):
         return Response(serializers.data)
 
 class TodayMpesaLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_today_mpesa_logs(self):
         today = dt.date.today()
         try:
@@ -303,7 +303,7 @@ class TodayMpesaLogs(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserMpesaLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_user_mpesa_logs(self,id):
         try:
             return LogMpesa.objects.all().filter(user_id=id).order_by('-date')
@@ -316,7 +316,7 @@ class UserMpesaLogs(APIView):
         return Response(serializers.data)
 
 class MpesaCumulative(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_mpesa_total(self):
         try:
             return LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
@@ -329,7 +329,7 @@ class MpesaCumulative(APIView):
         return Response(serializers.data)
 
 class MpesaTodayTotal(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_mpesa_total(self):
         today = dt.date.today()
         try:
@@ -351,7 +351,7 @@ class MpesaTodayTotal(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TotalFuelReceivedToday(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_fuel_received(self,id):
         today = dt.date.today()
         try:
@@ -366,7 +366,7 @@ class TotalFuelReceivedToday(APIView):
         return Response(serializers.data)
 
 class FuelReceivedTodayInfo(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_fuel_received_info(self,id):
         today = dt.date.today()
         try:
@@ -381,7 +381,7 @@ class FuelReceivedTodayInfo(APIView):
         return Response(serializers.data)
 
 class LogDetails(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_log_details(self,id):
         try:
             return Log.objects.all().filter(pk=id).first()
@@ -417,7 +417,7 @@ class LogDetails(APIView):
         return Response(serializers.data)
 
 class MpesaLogDetails(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_mpesa_details(self,id):
         try:
             return LogMpesa.objects.all().filter(pk=id)
@@ -430,7 +430,7 @@ class MpesaLogDetails(APIView):
         return Response(serializers.data)
 
 class PastLogs(APIView):
-    permission_classes=(IsAuthenticated,)
+    permission_classes=(AllowAny,)
     def get_past_logs(self,past_date):
         try:
             date = dt.datetime.strptime(past_date, '%Y-%m-%d').date()
