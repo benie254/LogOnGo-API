@@ -355,8 +355,9 @@ class Contact(models.Model):
 class Announcement(models.Model):
     subject = models.CharField(max_length=60)
     announcement = models.TextField(max_length=5000) 
-    your_name = models.CharField(max_length=120,null=True,blank=True) 
-    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
+    date = models.DateField(default=timezone.now)
+    announced_by = models.CharField(max_length=120,null=True,blank=True) 
+    user_id = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
 
     def __str__(self):
         return self.announcement

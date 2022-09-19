@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404, render,redirect
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogSerializer
+from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogSerializer, AnnouncementSerializer
 
 
 from django.http import HttpResponse,Http404, JsonResponse
@@ -17,6 +17,19 @@ from django.db.models import Max, Min,F, ExpressionWrapper, DecimalField, Positi
 from log_app.models import Announcement, Contact, Incident, Log, LogMpesa
 from rest_framework.permissions import AllowAny,AllowAny
 # Create your views here.
+class Announcements(APIView):
+    permission_classes=(AllowAny,)
+    def get_announcements(self):
+        try:
+            return Announcement.objects.all().order_by('-date')[:3]
+        except Announcement.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        announcement = Announcement.objects.all().order_by('-date')[:3]
+        serializers = AnnouncementSerializer(announcement,many=True)
+        return Response(serializers.data)
+
 class RegisteredFuels(APIView):
     permission_classes=(AllowAny,)
     def get_registered_fuels(self):
