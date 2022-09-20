@@ -30,6 +30,20 @@ class Announcements(APIView):
         serializers = AnnouncementSerializer(announcement,many=True)
         return Response(serializers.data)
 
+
+class AllAnnouncements(APIView):
+    permission_classes=(AllowAny,)
+    def get_announcements(self):
+        try:
+            return Announcement.objects.all().order_by('-date')
+        except Announcement.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        announcement = Announcement.objects.all().order_by('-date')
+        serializers = AnnouncementSerializer(announcement,many=True)
+        return Response(serializers.data)
+
 class RegisteredFuels(APIView):
     permission_classes=(AllowAny,)
     def get_registered_fuels(self):
