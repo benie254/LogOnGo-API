@@ -50,7 +50,7 @@ class ContactSerializer(serializers.ModelSerializer):
 class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement  
-        fields = ('id','subject','announcement','user_id','date','announced_by',)
+        fields = ('id','user_id','date','subject','announcement','announced_by',)
 
 class LogReportSerializer(serializers.ModelSerializer):
     class Meta:
