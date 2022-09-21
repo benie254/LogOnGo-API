@@ -292,7 +292,7 @@ class LogMpesa(models.Model):
     # first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
     # last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
     user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
-    # logged_by = models.CharField(max_length=120,blank=True,null=True)
+    logged_by = models.CharField(max_length=120,blank=True,null=True)
     # site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
 
     def __int__(self):
