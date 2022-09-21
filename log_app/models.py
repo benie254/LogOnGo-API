@@ -247,6 +247,7 @@ class Fuel(models.Model):
 class Log(models.Model):
     date = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
+    fuel_name = models.CharField(max_length=60,null=True,blank=True)
     eod_reading_lts = models.DecimalField(max_digits=19,decimal_places=2)
     eod_reading_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
     total_litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
@@ -286,7 +287,7 @@ class LogMpesa(models.Model):
     customer_name = models.CharField(max_length=120,default='')
     customer_phone_number = models.PositiveBigIntegerField(default=0)
     amount = models.PositiveBigIntegerField(default=0)
-    amount_transferred_to_bank = models.BigIntegerField(null=True,blank=True)
+    amount_transferred_to_bank = models.BigIntegerField(default=0)
     # daily_total = models.BigIntegerField(null=True,blank=True)
     # cumulative_amount = models.IntegerField(null=True,blank=True)
     # first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
