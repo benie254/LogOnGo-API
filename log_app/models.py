@@ -283,20 +283,20 @@ class Log(models.Model):
 class LogMpesa(models.Model):
     date = models.DateField(default=timezone.now)
     transaction_number = models.CharField(max_length=30,default=0)
-    customer_name = models.CharField(max_length=120,default='')
-    customer_phone_number = models.PositiveBigIntegerField(default=0)
-    amount = models.PositiveBigIntegerField(default=0)
-    amount_transferred_to_bank = models.BigIntegerField(null=True,blank=True)
-    daily_total = models.BigIntegerField(null=True,blank=True)
-    cumulative_amount = models.IntegerField(null=True,blank=True)
-    first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
-    last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
-    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
-    logged_by = models.CharField(max_length=120,blank=True,null=True)
-    site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
+    # customer_name = models.CharField(max_length=120,default='')
+    # customer_phone_number = models.PositiveBigIntegerField(default=0)
+    # amount = models.PositiveBigIntegerField(default=0)
+    # amount_transferred_to_bank = models.BigIntegerField(null=True,blank=True)
+    # daily_total = models.BigIntegerField(null=True,blank=True)
+    # cumulative_amount = models.IntegerField(null=True,blank=True)
+    # first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
+    # last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
+    # user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
+    # logged_by = models.CharField(max_length=120,blank=True,null=True)
+    # site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
 
     def __int__(self):
-        return self.date 
+        return self.transaction_number 
 
     @classmethod
     def logs_today(cls):
