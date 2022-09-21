@@ -222,9 +222,6 @@ class TodayFuelLogs(APIView):
                 today_fuel_log.balance = (init) - F('total_litres_sold')
                 bal = today_fuel_log.balance 
             if bal and petrol_received:
-                petrol_received_info.fuel_name = today_fuel_log.fuel.fuel_type
-                petrol_received_info.save()
-                petrol_received_info.refresh_from_db()
                 petrol_amount = petrol_received
                 today_fuel_log.updated_balance = F('balance')+ (petrol_received)
                 today_fuel_log.save()
@@ -408,9 +405,15 @@ class FuelReceivedTodayInfo(APIView):
     
     def get(self, request, id, format=None):
         today = dt.date.today()
+        petrol_received_info = FuelReceived.objects.all().filter(fuel_id=id).last()
+        petrol_received_info.total_fuel_received_today = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        petrol_received_info.fuel_name = petrol_received_info.fuel.fuel_type
+        petrol_received_info.save()
+        petrol_received_info.refresh_from_db()
         fuel_received_info = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today)
         serializers = FuelReceivedSerializer(fuel_received_info,many=True)
         return Response(serializers.data)
+        
 
 class LogDetails(APIView):
     permission_classes=(AllowAny,)

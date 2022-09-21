@@ -35,7 +35,7 @@ class LogMpesaSerializer(serializers.ModelSerializer):
 class FuelReceivedSerializer(serializers.ModelSerializer):
     class Meta:
         model = FuelReceived 
-        fields = ('id','litres_received','received_from','date_received','fuel','fuel_name')
+        fields = ('id','litres_received','received_from','date_received','fuel','fuel_name','total_fuel_received_today')
 
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
