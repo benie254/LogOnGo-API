@@ -426,6 +426,7 @@ class LogDetails(APIView):
     def get(self, request, id, format=None):
         log_details = Log.objects.all().filter(pk=id).first()
         today = dt.date.today()
+        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         log_details.total_litres_sold = ExpressionWrapper(F('eod_reading_yesterday')-F('eod_reading_lts'),output_field=DecimalField())
         log_details.save()
         log_details.refresh_from_db()
@@ -433,23 +434,60 @@ class LogDetails(APIView):
         petrol_received = FuelReceived.objects.all().filter(fuel_id=1).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
         yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).first()
-        if log_details.balance and petrol_received:
-            petrol_amount = petrol_received
-            log_details.updated_balance = ExpressionWrapper(F('balance')+((petrol_amount)),output_field=DecimalField())
+        if log_details and petrol_info:
+            petrol_pp = petrol_info.price_per_litre 
+            log_details.fuel_name = log_details.fuel.fuel_type
             log_details.save()
-            log_details.refresh_from_db()              
-        elif yesterday_petrol_logs:
-            yesterday_bal = yesterday_petrol_logs.balance
-            log_details.balance = (yesterday_bal)-(total_sold)
+            log_details.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
             log_details.save()
-            log_details.refresh_from_db() 
-        elif log_details.updated_balance and petrol_received:
-            petrol_amount = petrol_received
-            log_details.updated_balance = ExpressionWrapper(F('updated_balance')+((petrol_amount)),output_field=DecimalField())
-            log_details.save(update_fields=['updated_balance'])
-            log_details.refresh_from_db() 
+            total_sold = log_details.total_litres_sold
+            log_details.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (petrol_pp),output_field=PositiveIntegerField())
+            log_details.save()
+            log_details.refresh_from_db()
+            log_details.logged_by = request.user.username 
+            log_details.save()
+            # user_id = MyUser.objects.get(id=c_user_id)
+            # log_details.user_id = user_id
+            # log_details.save()
+            # log_details.refresh_from_db()
+            if yesterday_petrol_logs:
+                eod_yesterday = yesterday_petrol_logs.eod_reading_lts
+                log_details.eod_reading_yesterday = eod_yesterday
+                log_details.save()
+                bal_yesterday = yesterday_petrol_logs.balance
+                log_details.balance_yesterday = bal_yesterday
+                log_details.save()
+                yesterday_bal = log_details.balance_yesterday
+                log_details.balance = F('balance_yesterday') - F('total_litres_sold')
+                log_details.save()
+                log_details.refresh_from_db()
+                bal = log_details.balance 
+            else:
+                init = petrol_info.initial_litres_in_tank
+                log_details.balance = (init) - F('total_litres_sold')
+                bal = log_details.balance 
+            if bal and petrol_received:
+                petrol_amount = petrol_received
+                log_details.updated_balance = F('balance')+ (petrol_received)
+                log_details.save()
+                log_details.refresh_from_db()              
+            elif log_details.updated_balance and petrol_received:
+                petrol_amount = petrol_received
+                log_details.updated_balance = F('updated_balance')+ (petrol_amount)
+                log_details.save(update_fields=['updated_balance'])
+                log_details.refresh_from_db() 
+        
         serializers = LogSerializer(log_details,many=False)
         return Response(serializers.data)
+
+    def put(self, request, id, format=None):
+        log_details = Log.objects.all().filter(pk=id).first()
+        serializers = LogSerializer(log_details,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MpesaLogDetails(APIView):
     permission_classes=(AllowAny,)
