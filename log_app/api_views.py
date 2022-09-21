@@ -184,12 +184,14 @@ class TodayFuelLogs(APIView):
         c_user_id = request.user.id
         today = dt.date.today()
         today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
-        petrol_received = FuelReceived.objects.all().filter(fuel_id=1).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        petrol_received_info = FuelReceived.objects.all().filter(fuel_id=id).last()
+        petrol_received = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
         yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).first()
         petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         if today_fuel_log and petrol_info:
-            petrol_pp = petrol_info.price_per_litre
+            petrol_pp = petrol_info.price_per_litre 
+            today_fuel_log.fuel_name = today_fuel_log.fuel.fuel_type
             today_fuel_log.save()
             today_fuel_log.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
             today_fuel_log.save()
@@ -220,6 +222,9 @@ class TodayFuelLogs(APIView):
                 today_fuel_log.balance = (init) - F('total_litres_sold')
                 bal = today_fuel_log.balance 
             if bal and petrol_received:
+                petrol_received_info.fuel_name = today_fuel_log.fuel.fuel_type
+                petrol_received_info.save()
+                petrol_received_info.refresh_from_db()
                 petrol_amount = petrol_received
                 today_fuel_log.updated_balance = F('balance')+ (petrol_received)
                 today_fuel_log.save()
