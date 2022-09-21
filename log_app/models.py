@@ -283,8 +283,8 @@ class Log(models.Model):
 class LogMpesa(models.Model):
     date = models.DateField(default=timezone.now)
     transaction_number = models.CharField(max_length=30,default=0)
-    # customer_name = models.CharField(max_length=120,default='')
-    # customer_phone_number = models.PositiveBigIntegerField(default=0)
+    customer_name = models.CharField(max_length=120,default='')
+    customer_phone_number = models.PositiveBigIntegerField(default=0)
     # amount = models.PositiveBigIntegerField(default=0)
     # amount_transferred_to_bank = models.BigIntegerField(null=True,blank=True)
     # daily_total = models.BigIntegerField(null=True,blank=True)

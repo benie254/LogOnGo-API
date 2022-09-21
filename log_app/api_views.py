@@ -333,12 +333,12 @@ class UserMpesaLogs(APIView):
     permission_classes=(AllowAny,)
     def get_user_mpesa_logs(self,id):
         try:
-            return LogMpesa.objects.all().filter(user_id=id).order_by('-date')
+            return LogMpesa.objects.all().filter(user=id).order_by('-date')
         except LogMpesa.DoesNotExist:
             return Http404
 
     def get(self, request, id, format=None):
-        user_mpesa_logs = LogMpesa.objects.all().filter(user_id=id).order_by('-date')
+        user_mpesa_logs = LogMpesa.objects.all().filter(user=id).order_by('-date')
         serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
         return Response(serializers.data)
 
