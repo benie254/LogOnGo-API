@@ -388,39 +388,37 @@ class TotalFuelReceivedToday(APIView):
     def get_fuel_received(self,id):
         today = dt.date.today()
         try:
-            return FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+            return FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).last()
         except FuelReceived.DoesNotExist:
             return Http404
 
     def get(self, request, id, format=None):
         today = dt.date.today()
-        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).last()
+        if fuel_received:
+            fuel_received.total_fuel_received_today = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+            fuel_received.fuel_name = fuel_received.fuel.fuel_type
+            fuel_received.save()
+            fuel_received.refresh_from_db()
         serializers = FuelReceivedSerializer(fuel_received,many=False)
         return Response(serializers.data)
 
 class FuelReceivedToday(APIView):
     permission_classes=(AllowAny,)
-    def get_fuel_received_info(self,id):
+    def get_fuel_received(self):
         today = dt.date.today()
         try:
-            return FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).last()
+            return FuelReceived.objects.all().filter(date_received=today)
         except FuelReceived.DoesNotExist:
             return Http404
     
-    def get(self, request, id, format=None):
+    def get(self, request, format=None):
         today = dt.date.today()
-        fuel_received_info = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).last()
-        if fuel_received_info:
-            fuel_received_info.total_fuel_received_today = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-            fuel_received_info.save()
-            fuel_received_info.refresh_from_db()
-            fuel_received_info.fuel_name = fuel_received_info.fuel.fuel_type
-            fuel_received_info.save()
-            fuel_received_info.refresh_from_db()
-        serializers = FuelReceivedSerializer(fuel_received_info,many=False)
+        fuel_received_today = FuelReceived.objects.all().filter(date_received=today)
+        serializers = FuelReceivedSerializer(fuel_received_today,many=True)
         return Response(serializers.data)
 
-    def post(self, request, id, format=None):
+    def post(self, request, format=None):
         serializers = FuelReceivedSerializer(data=request.data)
         if serializers.is_valid():
             serializers.save()
