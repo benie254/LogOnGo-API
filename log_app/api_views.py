@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, render,redirect
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport
+from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer
 
 
 from django.http import HttpResponse,Http404, JsonResponse
@@ -558,7 +558,40 @@ class DieselReceivedTodayInfo(APIView):
         serializers = FuelReceivedSerializer(fuel_received_info,many=True)
         return Response(serializers.data)
 
-
+class GasReceivedTodayInfo(APIView):
+    permission_classes=(AllowAny,)
+    def get_fuel_received_info(self):
+        gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
+        if gas_info:
+            print(gas_info)
+            print(gas_info.id)
+            gas_id = gas_info.id
+        else:
+            Http404
+        today = dt.date.today()
+        try:
+            return FuelReceived.objects.all().filter(fuel_id=gas_id).filter(date_received=today)
+        except FuelReceived.DoesNotExist:
+            return Http404
+    
+    def get(self, request, format=None):
+        today = dt.date.today()
+        gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
+        if gas_info:
+            print(gas_info)
+            print(gas_info.id)
+            gas_id = gas_info.id
+        else:
+            Http404
+        gas_received_info = FuelReceived.objects.all().filter(fuel_id=gas_id).last()
+        if gas_received_info:
+            gas_received_info.total_fuel_received_today = FuelReceived.objects.all().filter(fuel_id=gas_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+            gas_received_info.fuel_name = gas_received_info.fuel.fuel_type
+            gas_received_info.save()
+            gas_received_info.refresh_from_db()
+        fuel_received_info = FuelReceived.objects.all().filter(fuel_id=gas_id).filter(date_received=today)
+        serializers = FuelReceivedSerializer(fuel_received_info,many=True)
+        return Response(serializers.data)
         
 
 class LogDetails(APIView):
@@ -639,14 +672,37 @@ class MpesaLogDetails(APIView):
     permission_classes=(AllowAny,)
     def get_mpesa_details(self,id):
         try:
-            return LogMpesa.objects.all().filter(pk=id)
+            return LogMpesa.objects.all().filter(id=id).last()
         except LogMpesa.DoesNotExist:
             return Http404
     
     def get(self, request, id, format=None):
-        mpesa_details = LogMpesa.objects.all().filter(pk=id)
+        today = dt.date.today()
+        mpesa_details = LogMpesa.objects.all().filter(id=id).last()
+        mpesa_today = LogMpesa.objects.all().filter(date=today)
+        if mpesa_details and mpesa_today:
+            mpesa_details.daily_total = LogMpesa.objects.all().filter(date=today).aggregate(TOTAL = Sum('amount'))['TOTAL']
+            mpesa_details.save()
+            mpesa_details.cumulative_amount = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
+            mpesa_details.save()
+            mpesa_details.refresh_from_db()
+        elif mpesa_details:
+            mpesa_details.daily_total = 0
+            mpesa_details.save()
+            mpesa_details.cumulative_amount = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
+            mpesa_details.save()
+            mpesa_details.refresh_from_db()
         serializers = LogMpesaSerializer(mpesa_details,many=False)
         return Response(serializers.data)
+
+    def put(self, request, id, format=None):
+        mpesa_details = LogMpesa.objects.all().filter(id=id).first()
+        serializers = LogMpesaSerializer(mpesa_details,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PastLogs(APIView):
     permission_classes=(AllowAny,)
@@ -694,6 +750,62 @@ class EmailReport(APIView):
                 from_email = Email("davinci.monalissa@gmail.com"),
                 to_emails = receiver,
                 subject = "Your email report",
+                html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
+            )
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Email report sent  successfully',
+                }
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class EmailMpesaReport(APIView):
+    permission_classes=(AllowAny,)
+    def get_mpesa_reports(self):
+        try:
+            return MpesaReport.objects.all()
+        except MpesaReport.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        reports = MpesaReport.objects.all()
+        serializers = MpesaReportSerializer(reports,many=True)
+        return Response(serializers.data)
+
+    def post(self, request,format=None):
+        serializers = MpesaReportSerializer(data=request.data)
+        if serializers.is_valid():
+            # serializer.is_valid(raise_exception=True)
+            date=serializers.validated_data['date']
+            transaction_number=serializers.validated_data['transaction_number']
+            customer_name=serializers.validated_data['customer_name']
+            customer_phone_number=serializers.validated_data['customer_phone_number']
+            amount=serializers.validated_data['amount']
+            amount_transferred_to_bank=serializers.validated_data['amount_transferred_to_bank']
+            daily_total=serializers.validated_data['daily_total']
+            cumulative_amount=serializers.validated_data['cumulative_amount']
+            logged_by=serializers.validated_data['logged_by']
+            username=serializers.validated_data['admin_name']
+            receiver=serializers.validated_data['admin_email']
+            serializers.save()
+            
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            msg = "Here is your requested email report:</p> <br> <ul><li>date: " + str(date) + " </li><li>transaction no.: " + str(transaction_number) + "</li><li>customer's name: " + str(customer_name) + " </li><li>customer's phone number: " + str(customer_phone_number) + "</li><li>amount: " + str(amount) + "</li><li>amount transferred to bank: " + str(amount_transferred_to_bank) + "</li><li>daily total: " + str(daily_total) + "</li><li>cumulative amount: " + str(cumulative_amount) + "</li><li>logged by: " + str(logged_by) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = "Your Mpesa report",
                 html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
             )
             try:
