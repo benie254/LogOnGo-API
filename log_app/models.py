@@ -328,7 +328,7 @@ class FuelReceived(models.Model):
     date_received = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     fuel_name = models.CharField(max_length=60,null=True,blank=True)
-    total_fuel_received_today = models.PositiveIntegerField(default=0)
+    total_fuel_received_today = models.PositiveIntegerField(default=0,null=True,blank=True)
 
     def __int__(self):
         return self.litres_received 
