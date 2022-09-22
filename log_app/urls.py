@@ -36,4 +36,5 @@ urlpatterns = [
     url(r'^log-details/(\d+)$', api_views.LogDetails.as_view(),name='log_details'),
     url(r'^mpesa-log-details/(\d+)$', api_views.MpesaLogDetails.as_view(),name='mpesa_log_details'),
     url(r'^past-logs/(\d{4}-\d{2}-\d{2})/$',api_views.PastLogs.as_view(),name='past_logs'),
+    url(r'^email-report',api_views.EmailReport.as_view(),name='email_report'),
 ]

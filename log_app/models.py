@@ -366,6 +366,7 @@ class Announcement(models.Model):
         return self.announcement
 
 class LogReport(models.Model):
+    user = models.ForeignKey(MyUser,null=True,on_delete=models.CASCADE)
     date = models.DateField(null=True,blank=True)
     eod_reading_lts = models.IntegerField(null=True,blank=True)
     eod_reading_yesterday = models.IntegerField(null=True,blank=True)
@@ -375,8 +376,8 @@ class LogReport(models.Model):
     first_logged = models.DateTimeField(null=True,blank=True)
     last_edited =models.DateTimeField(null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
-    admin_name = models.CharField(max_length=120,null=True,blank=True)
-    admin_email = models.EmailField(max_length=120,null=True,blank=True)
+    admin_name = models.CharField(max_length=120,default='')
+    admin_email = models.EmailField(max_length=120,default='')
 
     def __int__(self):
         return self.eod_reading_lts

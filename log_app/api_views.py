@@ -1,8 +1,12 @@
+import sendgrid
+from sendgrid.helpers.mail import * 
+import os 
+from decouple import config 
 from django.shortcuts import get_object_or_404, render,redirect 
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogSerializer, AnnouncementSerializer
+from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport
 
 
 from django.http import HttpResponse,Http404, JsonResponse
@@ -515,3 +519,55 @@ class PastLogs(APIView):
         past_logs = Log.objects.all().filter(date=past_date)
         serializers = LogSerializer(past_logs,many=True)
         return Response(serializers.data)
+
+class EmailReport(APIView):
+    permission_classes=(AllowAny,)
+    def get_reports(self):
+        try:
+            return LogReport.objects.all()
+        except LogReport.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        reports = LogReport.objects.all()
+        serializers = LogSerializer(reports,many=True)
+        return Response(serializers.data)
+
+    def post(self, request,format=None):
+        serializers = LogReportSerializer(data=request.data)
+        if serializers.is_valid():
+            # serializer.is_valid(raise_exception=True)
+            eod_reading_lts=serializers.validated_data['eod_reading_lts']
+            eod_reading_yesterday=serializers.validated_data['eod_reading_yesterday']
+            litres_sold_today=serializers.validated_data['litres_sold_today']
+            amount_earned_today=serializers.validated_data['amount_earned_today']
+            balance=serializers.validated_data['balance']
+            username=serializers.validated_data['admin_name']
+            receiver=serializers.validated_data['admin_email']
+            serializers.save()
+            
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            msg = "Here is your requested email report:</p> <br> <ul><li>eod: " + str(eod_reading_lts) + " </li>eod_yesterday: " + str(eod_reading_yesterday) + " <li>litres sold: " + str(litres_sold_today) + " </li>amount: " + str(amount_earned_today) + " <li>bal: " + str(balance) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = "Your email report",
+                html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
+            )
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Email report sent  successfully',
+                }
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+    

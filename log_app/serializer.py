@@ -55,7 +55,11 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 class LogReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogReport 
-        fields = ('id','date','eod_reading_lts','eod_reading_yesterday','litres_sold_today','amount_earned_today','balance','first_logged','last_edited','admin_name','admin_email','logged_by',)
+        fields = ('id','user','date','eod_reading_lts','eod_reading_yesterday','litres_sold_today','amount_earned_today','balance','first_logged','last_edited','admin_name','admin_email','logged_by',)
+
+    # def create(self, validated_data):
+    #     user = LogReport.objects.create_report(**validated_data)
+    #     return user
 
 class MpesaReportSerializer(serializers.ModelSerializer):
     class Meta:
