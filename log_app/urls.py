@@ -39,6 +39,7 @@ urlpatterns = [
     url(r'^diesel-received-today/info/$', api_views.DieselReceivedTodayInfo.as_view(),name='diesel_received_today-info'),
     url(r'^gas-received-today/info/$', api_views.GasReceivedTodayInfo.as_view(),name='gas_received_today-info'),
     url(r'^log-details/(\d+)$', api_views.LogDetails.as_view(),name='log_details'),
+    url(r'^petrol-log-details/(\d+)$', api_views.PetrolLogDetails.as_view(),name='petrol_log_details'),
     url(r'^mpesa-log-details/(\d+)$', api_views.MpesaLogDetails.as_view(),name='mpesa_log_details'),
     url(r'^past-logs/(\d{4}-\d{2}-\d{2})/$',api_views.PastLogs.as_view(),name='past_logs'),
     url(r'^email-report',api_views.EmailReport.as_view(),name='email_report'),

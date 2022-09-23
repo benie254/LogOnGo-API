@@ -384,7 +384,7 @@ class LogReport(models.Model):
 
 class MpesaReport(models.Model):
     date = models.DateField(blank=True,null=True)
-    transaction_number = models.PositiveIntegerField(blank=True,null=True)
+    transaction_number = models.CharField(max_length=100,blank=True,null=True)
     customer_name = models.CharField(max_length=120,blank=True,null=True)
     customer_phone_number = models.PositiveBigIntegerField(blank=True,null=True)
     amount = models.PositiveBigIntegerField(blank=True,null=True)
