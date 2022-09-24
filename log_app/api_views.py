@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, render,redirect
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer
+from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer, PumpSerializer
 
 
 from django.http import HttpResponse,Http404, JsonResponse
@@ -126,6 +126,73 @@ class PetrolInfo(APIView):
             return Response(serializers.data)
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PumpOneInfo(APIView):
+    permission_classes=(AllowAny,)
+    def get_pump_info(self):
+        try:
+            return Pump.objects.all().filter(pump_name='Petrol').last()
+        except Pump.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        pump_info = Pump.objects.all().filter(pump_name='Pump One').last()
+        serializers = PumpSerializer(pump_info,many=False)
+        return Response(serializers.data)
+
+    def put(self, request, format=None):
+        pump_info = Pump.objects.all().filter(pump_name='Pump One').last()
+        serializers = PumpSerializer(pump_info,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PumpTwoInfo(APIView):
+    permission_classes=(AllowAny,)
+    def get_pump_info(self):
+        try:
+            return Pump.objects.all().filter(pump_name='Pump Two').last()
+        except Pump.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        pump_info = Pump.objects.all().filter(pump_name='Pump Two').last()
+        serializers = PumpSerializer(pump_info,many=False)
+        return Response(serializers.data)
+
+    def put(self, request, format=None):
+        pump_info = Pump.objects.all().filter(pump_name='Pump Two').last()
+        serializers = PumpSerializer(pump_info,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PumpThreeInfo(APIView):
+    permission_classes=(AllowAny,)
+    def get_pump_info(self):
+        try:
+            return Pump.objects.all().filter(pump_name='Pump Three').last()
+        except Pump.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        pump_info = Pump.objects.all().filter(pump_name='Pump Three').last()
+        serializers = PumpSerializer(pump_info,many=False)
+        return Response(serializers.data)
+
+    def put(self, request, format=None):
+        pump_info = Pump.objects.all().filter(pump_name='Pump Three').last()
+        serializers = PumpSerializer(pump_info,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class AllLogs(APIView):
     permission_classes=(AllowAny,)
