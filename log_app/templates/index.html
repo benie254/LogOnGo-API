@@ -29,16 +29,43 @@
     <ul>
         <p>Our endpoints:</p>
         <li>
+            <a href="/admin/">Admin</a>
+        </li>
+        <li>
             <a href="{% url 'all_announcements' %}">All announcements</a>
         </li>
         <li>
             <a href="{% url 'announcements' %}">Last 3 announcements</a>
         </li>
         <li>
+            <a href="{% url 'stations' %}">Stations</a>
+        </li>
+        <li>
+            <a href="{% url 'profiles' %}">Profiles</a>
+        </li>
+        <li>
+            <a href="{% url 'user_profile' %}">User profile</a>
+        </li>
+        <li>
             <a href="{% url 'all_users' %}">All users</a>
         </li>
         <li>
+            <a href="{% url 'register' %}">Register</a>
+        </li>
+        <li>
+            <a href="{% url 'login' %}">Login</a>
+        </li>
+        <li>
             <a href="{% url 'our_fuels' %}">Our fuels</a>
+        </li>
+        <li>
+            <a href="{% url 'user' %}">User</a>
+        </li>
+        <li>
+            <a href="{% url 'our_fuels' %}">Our fuels</a>
+        </li>
+        <li>
+            <a href="{% url 'logout' %}">Logout</a>
         </li>
         <li>
             <a href="{% url 'diesel_info' %}">Diesel info</a>
@@ -50,20 +77,34 @@
             <a href="{% url 'petrol_info' %}">Petrol info</a>
         </li>
         <li>
+            <a href="{% url 'pump_one_info' %}">Pump one info</a>
+        </li>
+        <li>
+            <a href="{% url 'pump_two_info' %}">Pump two info</a>
+        </li>
+        <li>
+            <a href="{% url 'pump_three_info' %}">Pump three info</a>
+        </li>
+        <li>
             <a href="{% url 'all_logs' %}">All logs</a>
         </li>
         <li>
             <a href="{% url 'logs_today' %}">Logs today</a>
         </li>
-        fuel id
-        {% for l in logs%} 
-        {{l.fuel.fuel_type}}
-        {%endfor%}
         {% for u in users %}
         <li>
             <a href="{% url 'user_logs' u.id %}">User logs</a>
         </li>
         {% endfor %}
+        <li>
+            <a href="{% url 'petrol_summary' %}">Petrol summary today</a>
+        </li>
+        <li>
+            <a href="{% url 'diesel_summary' %}">Diesel summary today</a>
+        </li>
+        <li>
+            <a href="{% url 'gas_summary' %}">Gas summary today</a>
+        </li>
         {%for f in fuels%} 
         <li>
             <a href="{% url 'fuel_logs_today' f.id %}">{{f.fuel_type}} logs today</a>
@@ -90,22 +131,17 @@
         </li>
         {%endfor%}
         <li>
-            <a href="{% url 'mpesa_cumulative' %}">Mpesa cumulative</a>
+            <a href="{% url 'fuel_received_today' %}">All fuel received today</a>
         </li>
         <li>
-            <a href="{% url 'mpesa_total_today' %}">Mpesa total today</a>
-        </li>
-        {%for f in fuels%}
-        <li>
-            <a href="{% url 'fuel_logs_yesterday' f.id %}">{{f.fuel_type}} logs yesterday</a>
+            <a href="{% url 'petrol_received_today-info' %}">Petrol received today info</a>
         </li>
         <li>
-            <a href="{% url 'total_fuel_today' f.id %}">Total {{f.fuel_type}} received today</a>
+            <a href="{% url 'diesel_received_today-info' %}">Diesel received today info</a>
         </li>
         <li>
-            <a href="{% url 'fuel_received_today' f.id %}">{{f.fuel_type}} received today info</a>
+            <a href="{% url 'gas_received_today-info' %}">Gas received today info</a>
         </li>
-        {%endfor%}
         {%for l in logs%}
         <li>
             <a href="{% url 'log_details' l.id %}">Log details</a>
@@ -116,6 +152,12 @@
             <a href="{% url 'mpesa_log_details' m.id %}">Mpesa log details</a>
         </li>
         {%endfor%}
+        <li>
+            <a href="{% url 'email_report' %}">Email report</a>
+        </li>
+        <li>
+            <a href="{% url 'email_mpesa_report' %}">Email mpesa report</a>
+        </li>
         <li>
             <a href="">Past logs</a>
         </li>

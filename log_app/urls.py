@@ -34,7 +34,7 @@ urlpatterns = [
     url(r'^all-mpesa-logs/$', api_views.AllMpesaLogs.as_view(),name='all_mpesa_logs'),
     url(r'^mpesa-logs-today/$', api_views.TodayMpesaLogs.as_view(),name='mpesa_logs_today'),
     url(r'^user-mpesa-logs/(\d+)$', api_views.UserMpesaLogs.as_view(),name='user_mpesa_logs'),
-    url(r'^fuel-received-today/$', api_views.AllFuelReceivedToday.as_view(),name='received_fuel_today'),
+    url(r'^all-fuel-received-today/$', api_views.AllFuelReceivedToday.as_view(),name='fuel_received_today'),
     url(r'^petrol-received-today/info/$', api_views.PetrolReceivedTodayInfo.as_view(),name='petrol_received_today-info'),
     url(r'^diesel-received-today/info/$', api_views.DieselReceivedTodayInfo.as_view(),name='diesel_received_today-info'),
     url(r'^gas-received-today/info/$', api_views.GasReceivedTodayInfo.as_view(),name='gas_received_today-info'),
@@ -42,5 +42,5 @@ urlpatterns = [
     url(r'^mpesa-log-details/(\d+)$', api_views.MpesaLogDetails.as_view(),name='mpesa_log_details'),
     url(r'^past-logs/(\d{4}-\d{2}-\d{2})/$',api_views.PastLogs.as_view(),name='past_logs'),
     url(r'^email-report/$',api_views.EmailReport.as_view(),name='email_report'),
-    url(r'^email-mpesa-report/$',api_views.EmailMpesaReport.as_view(),name='email_report'),
+    url(r'^email-mpesa-report/$',api_views.EmailMpesaReport.as_view(),name='email_mpesa_report'),
 ]

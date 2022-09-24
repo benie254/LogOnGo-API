@@ -496,6 +496,7 @@ class DieselSummaryToday(APIView):
         diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').first()
         today_diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').filter(date=today).last()
         yesterday_diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').filter(date=yesterday).last()
+        
         if diesel_info:
             diesel_id = diesel_info.id 
         else:
