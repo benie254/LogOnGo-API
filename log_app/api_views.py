@@ -11,7 +11,7 @@ from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaS
 
 from django.http import HttpResponse,Http404, JsonResponse
 from django.contrib.auth.decorators import login_required
-from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser 
+from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Pump 
 import datetime as dt 
 from django.db.models import Sum
 from django.contrib import messages
@@ -175,67 +175,754 @@ class UserLogs(APIView):
         serializers = LogSerializer(user_logs,many=True)
         return Response(serializers.data)
 
+class PetrolSummaryToday(APIView):
+    permission_classes=(AllowAny,)
+    def get_today_fuel_logs(self):
+        today = dt.date.today()
+        try:
+            petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').first()
+            petrol_id = petrol_info.id
+            return Fuel.objects.all().filter(fuel_id=petrol_id).first()
+        except Log.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
+        pump_one = Pump.objects.all().filter(pump_name='Pump One').first()
+        pump_two = Pump.objects.all().filter(pump_name='Pump Two').first()
+        pump_three = Pump.objects.all().filter(pump_name='Pump Three').first()
+        pump_four = Pump.objects.all().filter(pump_name='Pump Four').first()
+        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').first()
+        today_petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').filter(date=today).last()
+        yesterday_petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').filter(date=yesterday).last()
+        if petrol_info:
+            petrol_id = petrol_info.id 
+        else:
+            Http404
+
+        if pump_one:
+            pump_one_id = pump_one.id
+        else:
+            Http404
+        if pump_two:
+            pump_two_id = pump_two.id
+        else:
+            Http404
+        if pump_three:
+            pump_three_id = pump_three.id
+        else:
+            Http404
+        if pump_four:
+            pump_four_id = pump_four.id
+        else:
+            Http404
+        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_one_id).first()
+        today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_two_id).first()
+        today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_three_id).first()
+        today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_four_id).first()
+        petrol_received = FuelReceived.objects.all().filter(fuel_id=petrol_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        if today_fuel_log and today_log_two and today_log_three and today_log_four and petrol_info:
+            petrol_id = petrol_info.id
+            petrol_received = FuelReceived.objects.all().filter(date_received=today).filter(fuel_id=petrol_id).last()
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold
+            total_three = today_log_three.total_litres_sold 
+            total_four = today_log_four.total_litres_sold 
+            petrol_info.total_litres_sold_today = (total_one) + (total_two) + (total_three) + (total_four)
+            petrol_info.save()
+            petrol_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today
+            amount_three = today_log_three.amount_earned_today 
+            amount_four = today_log_four.amount_earned_today 
+            petrol_info.amount_earned_today = (amount_one) + (amount_two) + (amount_three) + (amount_four)
+            petrol_info.save()
+            petrol_info.refresh_from_db()
+            if yesterday_petrol_info and petrol_info.total_litres_sold_today:
+                petrol_info.balance_yesterday = yesterday_petrol_info.balance 
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal_yesterday = petrol_info.balance_yesterday
+                petrol_info.balance = (bal_yesterday) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance 
+            elif petrol_info.balance_yesterday and petrol_info.total_litres_sold_today:
+                bal_yesterday = petrol_info.balance_yesterday
+                total_sold = petrol_info.total_litres_sold_today
+                petrol_info.balance = (bal_yesterday) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance 
+            elif petrol_info.total_litres_sold_today:
+                init = petrol_info.initial_litres_in_tank 
+                total_sold = petrol_info.total_litres_sold_today
+                petrol_info.balance = (init) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                    
+                if petrol_info.balance and petrol_received.litres_received:
+                    petrol_received = petrol_received.litres_received
+                    bal = petrol_info.balance
+                    petrol_info.updated_balance = (bal) + (petrol_received)
+                    petrol_info.save()
+                    petrol_info.refresh_from_db()
+                    updated_bal = petrol_info.updated_balance 
+                elif updated_bal and petrol_received:
+                    petrol_info.updated_balance = (updated_bal) + (petrol_received)
+                    petrol_info.save()
+                    petrol_info.refresh_from_db()
+
+        elif today_fuel_log and today_log_two and today_log_three and petrol_info:
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold 
+            total_three = today_log_three.total_litres_sold 
+            petrol_info.total_litres_sold_today = (total_one) + (total_two) + (total_three)
+            petrol_info.save()
+            petrol_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today 
+            amount_three = today_log_three.amount_earned_today 
+            petrol_info.amount_earned_today = (amount_one) + (amount_two) + (amount_three)
+            petrol_info.save()
+            petrol_info.refresh_from_db()
+            if yesterday_petrol_info and petrol_info.total_litres_sold_today:
+                petrol_info.balance_yesterday = yesterday_petrol_info.balance 
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal_yesterday = petrol_info.balance_yesterday
+                petrol_info.balance = (bal_yesterday) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance 
+            elif petrol_info.balance_yesterday and petrol_info.total_litres_sold_today:
+                bal_yesterday = petrol_info.balance_yesterday
+                total_sold = petrol_info.total_litres_sold_today
+                petrol_info.balance = (bal_yesterday) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance 
+            elif petrol_info.total_litres_sold_today:
+                init = petrol_info.initial_litres_in_tank 
+                total_sold = petrol_info.total_litres_sold_today
+                petrol_info.balance = (init) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance
+                if bal and petrol_received:
+                    petrol_info.updated_balance = (bal) + (petrol_received)
+                    petrol_info.save()
+                    petrol_info.refresh_from_db()
+                    updated_bal = petrol_info.updated_balance 
+                elif updated_bal and petrol_received:
+                    petrol_info.updated_balance = (updated_bal) + (petrol_received)
+                    petrol_info.save()
+                    petrol_info.refresh_from_db()
+        elif today_fuel_log and today_log_two and petrol_info:
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold 
+            petrol_info.total_litres_sold_today = (total_one) + (total_two)
+            petrol_info.save()
+            petrol_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today 
+            petrol_info.amount_earned_today = (amount_one) + (amount_two)
+            petrol_info.save()
+            petrol_info.refresh_from_db()
+            if yesterday_petrol_info and petrol_info.total_litres_sold_today:
+                petrol_info.balance_yesterday = yesterday_petrol_info.balance 
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal_yesterday = petrol_info.balance_yesterday
+                petrol_info.balance = (bal_yesterday) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance 
+            elif petrol_info.balance_yesterday and petrol_info.total_litres_sold_today:
+                bal_yesterday = petrol_info.balance_yesterday
+                total_sold = petrol_info.total_litres_sold_today
+                petrol_info.balance = (bal_yesterday) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance 
+            elif petrol_info.total_litres_sold_today:
+                init = petrol_info.initial_litres_in_tank 
+                total_sold = petrol_info.total_litres_sold_today
+                petrol_info.balance = (init) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance
+                if bal and petrol_received:
+                    petrol_info.updated_balance = (bal) + (petrol_received)
+                    petrol_info.save()
+                    petrol_info.refresh_from_db()
+                    updated_bal = petrol_info.updated_balance 
+                elif updated_bal and petrol_received:
+                    petrol_info.updated_balance = (updated_bal) + (petrol_received)
+                    petrol_info.save()
+                    petrol_info.refresh_from_db()
+        elif today_fuel_log and petrol_info:
+            total_one = today_fuel_log.total_litres_sold 
+            print("total one:",total_one)
+            petrol_info.total_litres_sold_today = total_one
+            petrol_info.save()
+            petrol_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            petrol_info.amount_earned_today = amount_one
+            petrol_info.save()
+            petrol_info.refresh_from_db()
+            if yesterday_petrol_info and petrol_info.total_litres_sold_today:
+                petrol_info.balance_yesterday = yesterday_petrol_info.balance 
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal_yesterday = petrol_info.balance_yesterday
+                petrol_info.balance = (bal_yesterday) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance 
+            elif petrol_info.balance_yesterday and petrol_info.total_litres_sold_today:
+                bal_yesterday = petrol_info.balance_yesterday
+                total_sold = petrol_info.total_litres_sold_today
+                petrol_info.balance = (bal_yesterday) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance 
+            elif petrol_info.total_litres_sold_today:
+                init = petrol_info.initial_litres_in_tank 
+                total_sold = petrol_info.total_litres_sold_today
+                petrol_info.balance = (init) - (total_sold)
+                petrol_info.save()
+                petrol_info.refresh_from_db()
+                bal = petrol_info.balance
+                if bal and petrol_received:
+                    petrol_info.updated_balance = (bal) + (petrol_received)
+                    petrol_info.save()
+                    petrol_info.refresh_from_db()
+                    updated_bal = petrol_info.updated_balance 
+                elif updated_bal and petrol_received:
+                    petrol_info.updated_balance = (updated_bal) + (petrol_received)
+                    petrol_info.save()
+                    petrol_info.refresh_from_db()
+        serializers = FuelSerializer(petrol_info,many=False)
+        return Response(serializers.data)
+
+
+class DieselSummaryToday(APIView):
+    permission_classes=(AllowAny,)
+    def get_today_fuel_logs(self):
+        today = dt.date.today()
+        try:
+            diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').first()
+            diesel_id = diesel_info.id
+            return Fuel.objects.all().filter(fuel_id=diesel_id).first()
+        except Log.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
+        pump_one = Pump.objects.all().filter(pump_name='Pump One').first()
+        pump_two = Pump.objects.all().filter(pump_name='Pump Two').first()
+        pump_three = Pump.objects.all().filter(pump_name='Pump Three').first()
+        pump_four = Pump.objects.all().filter(pump_name='Pump Four').first()
+        diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').first()
+        today_diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').filter(date=today).last()
+        yesterday_diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').filter(date=yesterday).last()
+        if diesel_info:
+            diesel_id = diesel_info.id 
+        else:
+            Http404
+
+        if pump_one:
+            pump_one_id = pump_one.id
+        else:
+            Http404
+        if pump_two:
+            pump_two_id = pump_two.id
+        else:
+            Http404
+        if pump_three:
+            pump_three_id = pump_three.id
+        else:
+            Http404
+        if pump_four:
+            pump_four_id = pump_four.id
+        else:
+            Http404
+        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_one_id).first()
+        today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_two_id).first()
+        today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_three_id).first()
+        today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_four_id).first()
+        diesel_received = FuelReceived.objects.all().filter(fuel_id=diesel_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        if today_fuel_log and today_log_two and today_log_three and today_log_four and diesel_info:
+            diesel_id = diesel_info.id
+            diesel_received = FuelReceived.objects.all().filter(date_received=today).filter(fuel_id=diesel_id).last()
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold
+            total_three = today_log_three.total_litres_sold 
+            total_four = today_log_four.total_litres_sold 
+            diesel_info.total_litres_sold_today = (total_one) + (total_two) + (total_three) + (total_four)
+            diesel_info.save()
+            diesel_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today
+            amount_three = today_log_three.amount_earned_today 
+            amount_four = today_log_four.amount_earned_today 
+            diesel_info.amount_earned_today = (amount_one) + (amount_two) + (amount_three) + (amount_four)
+            diesel_info.save()
+            diesel_info.refresh_from_db()
+            if yesterday_diesel_info and diesel_info.total_litres_sold_today:
+                diesel_info.balance_yesterday = yesterday_diesel_info.balance 
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal_yesterday = diesel_info.balance_yesterday
+                diesel_info.balance = (bal_yesterday) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance 
+            elif diesel_info.balance_yesterday and diesel_info.total_litres_sold_today:
+                bal_yesterday = diesel_info.balance_yesterday
+                total_sold = diesel_info.total_litres_sold_today
+                diesel_info.balance = (bal_yesterday) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance 
+            elif diesel_info.total_litres_sold_today:
+                init = diesel_info.initial_litres_in_tank 
+                total_sold = diesel_info.total_litres_sold_today
+                diesel_info.balance = (init) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                    
+                if diesel_info.balance and diesel_received.litres_received:
+                    diesel_received = diesel_received.litres_received
+                    bal = diesel_info.balance
+                    diesel_info.updated_balance = (bal) + (diesel_received)
+                    diesel_info.save()
+                    diesel_info.refresh_from_db()
+                    updated_bal = diesel_info.updated_balance 
+                elif updated_bal and diesel_received:
+                    diesel_info.updated_balance = (updated_bal) + (diesel_received)
+                    diesel_info.save()
+                    diesel_info.refresh_from_db()
+
+        elif today_fuel_log and today_log_two and today_log_three and diesel_info:
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold 
+            total_three = today_log_three.total_litres_sold 
+            diesel_info.total_litres_sold_today = (total_one) + (total_two) + (total_three)
+            diesel_info.save()
+            diesel_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today 
+            amount_three = today_log_three.amount_earned_today 
+            diesel_info.amount_earned_today = (amount_one) + (amount_two) + (amount_three)
+            diesel_info.save()
+            diesel_info.refresh_from_db()
+            if yesterday_diesel_info and diesel_info.total_litres_sold_today:
+                diesel_info.balance_yesterday = yesterday_diesel_info.balance 
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal_yesterday = diesel_info.balance_yesterday
+                diesel_info.balance = (bal_yesterday) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance 
+            elif diesel_info.balance_yesterday and diesel_info.total_litres_sold_today:
+                bal_yesterday = diesel_info.balance_yesterday
+                total_sold = diesel_info.total_litres_sold_today
+                diesel_info.balance = (bal_yesterday) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance 
+            elif diesel_info.total_litres_sold_today:
+                init = diesel_info.initial_litres_in_tank 
+                total_sold = diesel_info.total_litres_sold_today
+                diesel_info.balance = (init) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance
+                if bal and diesel_received:
+                    diesel_info.updated_balance = (bal) + (diesel_received)
+                    diesel_info.save()
+                    diesel_info.refresh_from_db()
+                    updated_bal = diesel_info.updated_balance 
+                elif updated_bal and diesel_received:
+                    diesel_info.updated_balance = (updated_bal) + (diesel_received)
+                    diesel_info.save()
+                    diesel_info.refresh_from_db()
+        elif today_fuel_log and today_log_two and diesel_info:
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold 
+            diesel_info.total_litres_sold_today = (total_one) + (total_two)
+            diesel_info.save()
+            diesel_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today 
+            diesel_info.amount_earned_today = (amount_one) + (amount_two)
+            diesel_info.save()
+            diesel_info.refresh_from_db()
+            if yesterday_diesel_info and diesel_info.total_litres_sold_today:
+                diesel_info.balance_yesterday = yesterday_diesel_info.balance 
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal_yesterday = diesel_info.balance_yesterday
+                diesel_info.balance = (bal_yesterday) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance 
+            elif diesel_info.balance_yesterday and diesel_info.total_litres_sold_today:
+                bal_yesterday = diesel_info.balance_yesterday
+                total_sold = diesel_info.total_litres_sold_today
+                diesel_info.balance = (bal_yesterday) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance 
+            elif diesel_info.total_litres_sold_today:
+                init = diesel_info.initial_litres_in_tank 
+                total_sold = diesel_info.total_litres_sold_today
+                diesel_info.balance = (init) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance
+                if bal and diesel_received:
+                    diesel_info.updated_balance = (bal) + (diesel_received)
+                    diesel_info.save()
+                    diesel_info.refresh_from_db()
+                    updated_bal = diesel_info.updated_balance 
+                elif updated_bal and diesel_received:
+                    diesel_info.updated_balance = (updated_bal) + (diesel_received)
+                    diesel_info.save()
+                    diesel_info.refresh_from_db()
+        elif today_fuel_log and diesel_info:
+            total_one = today_fuel_log.total_litres_sold 
+            print("total one:",total_one)
+            diesel_info.total_litres_sold_today = total_one
+            diesel_info.save()
+            diesel_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            diesel_info.amount_earned_today = amount_one
+            diesel_info.save()
+            diesel_info.refresh_from_db()
+            if yesterday_diesel_info and diesel_info.total_litres_sold_today:
+                diesel_info.balance_yesterday = yesterday_diesel_info.balance 
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal_yesterday = diesel_info.balance_yesterday
+                diesel_info.balance = (bal_yesterday) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance 
+            elif diesel_info.balance_yesterday and diesel_info.total_litres_sold_today:
+                bal_yesterday = diesel_info.balance_yesterday
+                total_sold = diesel_info.total_litres_sold_today
+                diesel_info.balance = (bal_yesterday) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance 
+            elif diesel_info.total_litres_sold_today:
+                init = diesel_info.initial_litres_in_tank 
+                total_sold = diesel_info.total_litres_sold_today
+                diesel_info.balance = (init) - (total_sold)
+                diesel_info.save()
+                diesel_info.refresh_from_db()
+                bal = diesel_info.balance
+                if bal and diesel_received:
+                    diesel_info.updated_balance = (bal) + (diesel_received)
+                    diesel_info.save()
+                    diesel_info.refresh_from_db()
+                    updated_bal = diesel_info.updated_balance 
+                elif updated_bal and diesel_received:
+                    diesel_info.updated_balance = (updated_bal) + (diesel_received)
+                    diesel_info.save()
+                    diesel_info.refresh_from_db()
+        serializers = FuelSerializer(diesel_info,many=False)
+        return Response(serializers.data)
+
+
+class GasSummaryToday(APIView):
+    permission_classes=(AllowAny,)
+    def get_today_fuel_logs(self):
+        today = dt.date.today()
+        try:
+            gas_info = Fuel.objects.all().filter(fuel_type='Gas').first()
+            gas_id = gas_info.id
+            return Fuel.objects.all().filter(fuel_id=gas_id).first()
+        except Log.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
+        pump_one = Pump.objects.all().filter(pump_name='Pump One').first()
+        pump_two = Pump.objects.all().filter(pump_name='Pump Two').first()
+        pump_three = Pump.objects.all().filter(pump_name='Pump Three').first()
+        pump_four = Pump.objects.all().filter(pump_name='Pump Four').first()
+        gas_info = Fuel.objects.all().filter(fuel_type='Gas').first()
+        today_gas_info = Fuel.objects.all().filter(fuel_type='Gas').filter(date=today).last()
+        yesterday_gas_info = Fuel.objects.all().filter(fuel_type='Gas').filter(date=yesterday).last()
+        if gas_info:
+            gas_id = gas_info.id 
+        else:
+            Http404
+
+        if pump_one:
+            pump_one_id = pump_one.id
+        else:
+            Http404
+        if pump_two:
+            pump_two_id = pump_two.id
+        else:
+            Http404
+        if pump_three:
+            pump_three_id = pump_three.id
+        else:
+            Http404
+        if pump_four:
+            pump_four_id = pump_four.id
+        else:
+            Http404
+        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_one_id).first()
+        today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_two_id).first()
+        today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_three_id).first()
+        today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_four_id).first()
+        gas_received = FuelReceived.objects.all().filter(fuel_id=gas_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        if today_fuel_log and today_log_two and today_log_three and today_log_four and gas_info:
+            gas_id = gas_info.id
+            gas_received = FuelReceived.objects.all().filter(date_received=today).filter(fuel_id=gas_id).last()
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold
+            total_three = today_log_three.total_litres_sold 
+            total_four = today_log_four.total_litres_sold 
+            gas_info.total_litres_sold_today = (total_one) + (total_two) + (total_three) + (total_four)
+            gas_info.save()
+            gas_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today
+            amount_three = today_log_three.amount_earned_today 
+            amount_four = today_log_four.amount_earned_today 
+            gas_info.amount_earned_today = (amount_one) + (amount_two) + (amount_three) + (amount_four)
+            gas_info.save()
+            gas_info.refresh_from_db()
+            if yesterday_gas_info and gas_info.total_litres_sold_today:
+                gas_info.balance_yesterday = yesterday_gas_info.balance 
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal_yesterday = gas_info.balance_yesterday
+                gas_info.balance = (bal_yesterday) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance 
+            elif gas_info.balance_yesterday and gas_info.total_litres_sold_today:
+                bal_yesterday = gas_info.balance_yesterday
+                total_sold = gas_info.total_litres_sold_today
+                gas_info.balance = (bal_yesterday) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance 
+            elif gas_info.total_litres_sold_today:
+                init = gas_info.initial_litres_in_tank 
+                total_sold = gas_info.total_litres_sold_today
+                gas_info.balance = (init) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                    
+                if gas_info.balance and gas_received.litres_received:
+                    gas_received = gas_received.litres_received
+                    bal = gas_info.balance
+                    gas_info.updated_balance = (bal) + (gas_received)
+                    gas_info.save()
+                    gas_info.refresh_from_db()
+                    updated_bal = gas_info.updated_balance 
+                elif updated_bal and gas_received:
+                    gas_info.updated_balance = (updated_bal) + (gas_received)
+                    gas_info.save()
+                    gas_info.refresh_from_db()
+
+        elif today_fuel_log and today_log_two and today_log_three and gas_info:
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold 
+            total_three = today_log_three.total_litres_sold 
+            gas_info.total_litres_sold_today = (total_one) + (total_two) + (total_three)
+            gas_info.save()
+            gas_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today 
+            amount_three = today_log_three.amount_earned_today 
+            gas_info.amount_earned_today = (amount_one) + (amount_two) + (amount_three)
+            gas_info.save()
+            gas_info.refresh_from_db()
+            if yesterday_gas_info and gas_info.total_litres_sold_today:
+                gas_info.balance_yesterday = yesterday_gas_info.balance 
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal_yesterday = gas_info.balance_yesterday
+                gas_info.balance = (bal_yesterday) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance 
+            elif gas_info.balance_yesterday and gas_info.total_litres_sold_today:
+                bal_yesterday = gas_info.balance_yesterday
+                total_sold = gas_info.total_litres_sold_today
+                gas_info.balance = (bal_yesterday) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance 
+            elif gas_info.total_litres_sold_today:
+                init = gas_info.initial_litres_in_tank 
+                total_sold = gas_info.total_litres_sold_today
+                gas_info.balance = (init) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance
+                if bal and gas_received:
+                    gas_info.updated_balance = (bal) + (gas_received)
+                    gas_info.save()
+                    gas_info.refresh_from_db()
+                    updated_bal = gas_info.updated_balance 
+                elif updated_bal and gas_received:
+                    gas_info.updated_balance = (updated_bal) + (gas_received)
+                    gas_info.save()
+                    gas_info.refresh_from_db()
+        elif today_fuel_log and today_log_two and gas_info:
+            total_one = today_fuel_log.total_litres_sold 
+            total_two = today_log_two.total_litres_sold 
+            gas_info.total_litres_sold_today = (total_one) + (total_two)
+            gas_info.save()
+            gas_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            amount_two = today_log_two.amount_earned_today 
+            gas_info.amount_earned_today = (amount_one) + (amount_two)
+            gas_info.save()
+            gas_info.refresh_from_db()
+            if yesterday_gas_info and gas_info.total_litres_sold_today:
+                gas_info.balance_yesterday = yesterday_gas_info.balance 
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal_yesterday = gas_info.balance_yesterday
+                gas_info.balance = (bal_yesterday) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance 
+            elif gas_info.balance_yesterday and gas_info.total_litres_sold_today:
+                bal_yesterday = gas_info.balance_yesterday
+                total_sold = gas_info.total_litres_sold_today
+                gas_info.balance = (bal_yesterday) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance 
+            elif gas_info.total_litres_sold_today:
+                init = gas_info.initial_litres_in_tank 
+                total_sold = gas_info.total_litres_sold_today
+                gas_info.balance = (init) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance
+                if bal and gas_received:
+                    gas_info.updated_balance = (bal) + (gas_received)
+                    gas_info.save()
+                    gas_info.refresh_from_db()
+                    updated_bal = gas_info.updated_balance 
+                elif updated_bal and gas_received:
+                    gas_info.updated_balance = (updated_bal) + (gas_received)
+                    gas_info.save()
+                    gas_info.refresh_from_db()
+        elif today_fuel_log and gas_info:
+            total_one = today_fuel_log.total_litres_sold 
+            print("total one:",total_one)
+            gas_info.total_litres_sold_today = total_one
+            gas_info.save()
+            gas_info.refresh_from_db()
+            amount_one = today_fuel_log.amount_earned_today 
+            gas_info.amount_earned_today = amount_one
+            gas_info.save()
+            gas_info.refresh_from_db()
+            if yesterday_gas_info and gas_info.total_litres_sold_today:
+                gas_info.balance_yesterday = yesterday_gas_info.balance 
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal_yesterday = gas_info.balance_yesterday
+                gas_info.balance = (bal_yesterday) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance 
+            elif gas_info.balance_yesterday and gas_info.total_litres_sold_today:
+                bal_yesterday = gas_info.balance_yesterday
+                total_sold = gas_info.total_litres_sold_today
+                gas_info.balance = (bal_yesterday) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance 
+            elif gas_info.total_litres_sold_today:
+                init = gas_info.initial_litres_in_tank 
+                total_sold = gas_info.total_litres_sold_today
+                gas_info.balance = (init) - (total_sold)
+                gas_info.save()
+                gas_info.refresh_from_db()
+                bal = gas_info.balance
+                if bal and gas_received:
+                    gas_info.updated_balance = (bal) + (gas_received)
+                    gas_info.save()
+                    gas_info.refresh_from_db()
+                    updated_bal = gas_info.updated_balance 
+                elif updated_bal and gas_received:
+                    gas_info.updated_balance = (updated_bal) + (gas_received)
+                    gas_info.save()
+                    gas_info.refresh_from_db()
+        serializers = FuelSerializer(gas_info,many=False)
+        return Response(serializers.data)
+
+
 class TodayFuelLogs(APIView):
     permission_classes=(AllowAny,)
     def get_today_fuel_logs(self,id):
         today = dt.date.today()
         try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=id).first()
+            pump_one = Pump.objects.all().filter(pump_name='Pump One').first()
+            pump_one_id = pump_one.id
+            return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_one_id).first()
         except Log.DoesNotExist:
             return Http404
 
     def get(self, request, id, format=None):
-        c_user_id = request.user.id
         today = dt.date.today()
-        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
-        petrol_received_info = FuelReceived.objects.all().filter(fuel_id=id).last()
-        petrol_received = FuelReceived.objects.all().filter(fuel_id=id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        pump_one = Pump.objects.all().filter(pump_name='Pump One').first()
+        pump_one_id = pump_one.id
+        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_one_id).first()
+        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_one_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
-        yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).first()
-        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
-        if today_fuel_log and petrol_info:
-            petrol_pp = petrol_info.price_per_litre 
+        yesterday_fuel_logs = Log.objects.all().filter(fuel_id=id).filter(pump_id=pump_one_id).filter(date=yesterday).first()
+        fuel_info = Fuel.objects.all().filter(id=id).last()
+        if today_fuel_log and fuel_info:
+            price_per_litre = fuel_info.price_per_litre 
+            init = fuel_info.initial_litres_in_tank
             today_fuel_log.fuel_name = today_fuel_log.fuel.fuel_type
             today_fuel_log.save()
             today_fuel_log.refresh_from_db()
-            today_fuel_log.logged_by = request.user.username 
+            today_fuel_log.pump_name = today_fuel_log.pump.pump_name
             today_fuel_log.save()
             today_fuel_log.refresh_from_db()
-            if yesterday_petrol_logs:
-                eod_yesterday = yesterday_petrol_logs.eod_reading_lts
+            if yesterday_fuel_logs:
+                eod_yesterday = yesterday_fuel_logs.eod_reading_lts
                 today_fuel_log.eod_reading_yesterday = eod_yesterday
                 today_fuel_log.save()
                 today_fuel_log.refresh_from_db()
                 today_fuel_log.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
                 today_fuel_log.save()
                 today_fuel_log.refresh_from_db()
-                today_fuel_log.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (petrol_pp),output_field=PositiveIntegerField())
+                today_fuel_log.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
                 today_fuel_log.save()
                 today_fuel_log.refresh_from_db()
-                bal_yesterday = yesterday_petrol_logs.balance
-                today_fuel_log.balance_yesterday = bal_yesterday
-                today_fuel_log.save()
-                today_fuel_log.refresh_from_db()
-                today_fuel_log.balance = F('balance_yesterday') - F('total_litres_sold')
-                today_fuel_log.save()
-                today_fuel_log.refresh_from_db()
-                bal = today_fuel_log.balance 
             else:
-                eod_today = today_fuel_log.eod_reading_lts
-                today_fuel_log.total_litres_sold = 0
-                init = petrol_info.initial_litres_in_tank
-                today_fuel_log.balance = (init) - F('total_litres_sold')
-                bal = today_fuel_log.balance 
-            if bal and petrol_received:
-                petrol_amount = petrol_received
-                today_fuel_log.updated_balance = F('balance')+ (petrol_received)
+                today_fuel_log.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
                 today_fuel_log.save()
-                today_fuel_log.refresh_from_db()              
-            elif today_fuel_log.updated_balance and petrol_received:
-                petrol_amount = petrol_received
-                today_fuel_log.updated_balance = F('updated_balance')+ (petrol_amount)
-                today_fuel_log.save(update_fields=['updated_balance'])
-                today_fuel_log.refresh_from_db() 
+                today_fuel_log.refresh_from_db()
+                today_fuel_log.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                today_fuel_log.save()
+                today_fuel_log.refresh_from_db()
+        else: 
+            Http404
         serializers = LogSerializer(today_fuel_log,many=False)
         return Response(serializers.data)
 
@@ -243,62 +930,156 @@ class TodayFuelLogsTwo(APIView):
     permission_classes=(AllowAny,)
     def get_today_fuel_logs_two(self,id):
         today = dt.date.today()
+        pump_two = Pump.objects.all().filter(pump_name='Pump Two').first()
+        pump_two_id = pump_two.id
         try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:2]
+            return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_two_id).first()
         except Log.DoesNotExist:
             return Http404
 
     def get(self, request, id, format=None):
+        pump_two = Pump.objects.all().filter(pump_name='Pump Two').first()
+        pump_two_id = pump_two.id
         today = dt.date.today()
-        today_fuel_logs_two = Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:2]
-        serializers = LogSerializer(today_fuel_logs_two,many=True)
+        today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_two_id).first()
+        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_two_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        yesterday = today - dt.timedelta(days=1)
+        yesterday_log_two = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_two_id).first()
+        fuel_info = Fuel.objects.all().filter(id=id).last()
+        if today_log_two and fuel_info:
+            price_per_litre = fuel_info.price_per_litre 
+            init = fuel_info.initial_litres_in_tank
+            today_log_two.fuel_name = today_log_two.fuel.fuel_type
+            today_log_two.save()
+            today_log_two.refresh_from_db()
+            today_log_two.pump_name = today_log_two.pump.pump_name
+            today_log_two.save()
+            today_log_two.refresh_from_db()
+            if yesterday_log_two:
+                eod_yesterday = yesterday_log_two.eod_reading_lts
+                today_log_two.eod_reading_yesterday = eod_yesterday
+                today_log_two.save()
+                today_log_two.refresh_from_db()
+                today_log_two.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_two.save()
+                today_log_two.refresh_from_db()
+                today_log_two.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                today_log_two.save()
+                today_log_two.refresh_from_db()
+            else:
+                today_log_two.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_two.save()
+                today_log_two.refresh_from_db()
+                today_log_two.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                today_log_two.save()
+                today_log_two.refresh_from_db()
+        else: 
+            Http404
+        serializers = LogSerializer(today_log_two,many=False)
         return Response(serializers.data)
 
 class TodayFuelLogsThree(APIView):
     permission_classes=(AllowAny,)
     def get_today_fuel_logs_three(self,id):
         today = dt.date.today()
+        pump_three = Pump.objects.all().filter(pump_name='Pump Three').first()
+        pump_three_id = pump_three.id
         try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:3]
+            return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_three_id).first()
         except Log.DoesNotExist:
             return Http404
 
     def get(self, request, id, format=None):
         today = dt.date.today()
-        today_fuel_logs_three = Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:3]
-        serializers = LogSerializer(today_fuel_logs_three,many=True)
+        pump_three = Pump.objects.all().filter(pump_name='Pump Three').first()
+        pump_three_id = pump_three.id
+        today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_three_id).first()
+        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_three_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        yesterday = today - dt.timedelta(days=1)
+        yesterday_log_three = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_three_id).first()
+        fuel_info = Fuel.objects.all().filter(id=id).last()
+        if today_log_three and fuel_info:
+            price_per_litre = fuel_info.price_per_litre 
+            init = fuel_info.initial_litres_in_tank
+            today_log_three.fuel_name = today_log_three.fuel.fuel_type
+            today_log_three.save()
+            today_log_three.refresh_from_db()
+            today_log_three.pump_name = today_log_three.pump.pump_name
+            today_log_three.save()
+            today_log_three.refresh_from_db()
+            if yesterday_log_three:
+                eod_yesterday = yesterday_log_three.eod_reading_lts
+                today_log_three.eod_reading_yesterday = eod_yesterday
+                today_log_three.save()
+                today_log_three.refresh_from_db()
+                today_log_three.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_three.save()
+                today_log_three.refresh_from_db()
+                today_log_three.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                today_log_three.save()
+                today_log_three.refresh_from_db()
+            else:
+                today_log_three.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_three.save()
+                today_log_three.refresh_from_db()
+                today_log_three.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                today_log_three.save()
+                today_log_three.refresh_from_db()
+        else: 
+            Http404
+        serializers = LogSerializer(today_log_three,many=False)
         return Response(serializers.data)
 
 class TodayFuelLogsFour(APIView):
     permission_classes=(AllowAny,)
     def get_today_fuel_logs_four(self, id):
         today = dt.date.today()
+        pump_four = Pump.objects.all().filter(pump_name='Pump Three').first()
+        pump_four_id = pump_four.id
         try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:4]
+            return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_four_id).first()
         except Log.DoesNotExist:
             return Http404
 
     def get(self, request, id, format=None):
         today = dt.date.today()
-        today_fuel_logs_four = Log.objects.all().filter(date=today).filter(fuel_id=id).order_by('-date')[:4]
-        serializers = LogSerializer(today_fuel_logs_four,many=True)
-        return Response(serializers.data)
-
-class YesterdayFuelLogs(APIView):
-    permission_classes=(AllowAny,)
-    def get_yesterday_fuel_logs(self,id):
-        today = dt.date.today()
+        pump_four = Pump.objects.all().filter(pump_name='Pump Three').first()
+        pump_four_id = pump_four.id
+        today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_four_id).first()
+        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_four_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
-        try:
-            return Log.objects.all().filter(date=yesterday).filter(fuel_id=id).first()
-        except Log.DoesNotExist:
-            return Http404
-
-    def get(self, request, id, format=None):
-        today = dt.date.today()
-        yesterday = today - dt.timedelta(days=1)
-        yesterday_fuel_logs = Log.objects.all().filter(date=yesterday).filter(fuel_id=id).first()
-        serializers = LogSerializer(yesterday_fuel_logs,many=False)
+        yesterday_log_four = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_four_id).first()
+        fuel_info = Fuel.objects.all().filter(id=id).last()
+        if today_log_four and fuel_info:
+            price_per_litre = fuel_info.price_per_litre 
+            init = fuel_info.initial_litres_in_tank
+            today_log_four.fuel_name = today_log_four.fuel.fuel_type
+            today_log_four.save()
+            today_log_four.refresh_from_db()
+            today_log_four.pump_name = today_log_four.pump.pump_name
+            today_log_four.save()
+            today_log_four.refresh_from_db()
+            if yesterday_log_four:
+                eod_yesterday = yesterday_log_four.eod_reading_lts
+                today_log_four.eod_reading_yesterday = eod_yesterday
+                today_log_four.save()
+                today_log_four.refresh_from_db()
+                today_log_four.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_four.save()
+                today_log_four.refresh_from_db()
+                today_log_four.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                today_log_four.save()
+                today_log_four.refresh_from_db()
+            else:
+                today_log_four.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_four.save()
+                today_log_four.refresh_from_db()
+                today_log_four.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                today_log_four.save()
+                today_log_four.refresh_from_db()
+        else: 
+            Http404
+        serializers = LogSerializer(today_log_four,many=False)
         return Response(serializers.data)
 
 class AllMpesaLogs(APIView):
@@ -349,147 +1130,7 @@ class UserMpesaLogs(APIView):
         serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
         return Response(serializers.data)
 
-class MpesaCumulative(APIView):
-    permission_classes=(AllowAny,)
-    def get_mpesa_total(self):
-        try:
-            return LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
-        except LogMpesa.DoesNotExist:
-            return Http404
-
-    def get(self, request, format=None):
-        mpesa_total = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
-        serializers = LogMpesaSerializer(mpesa_total,many=False)
-        return Response(serializers.data)
-
-class MpesaTodayTotal(APIView):
-    permission_classes=(AllowAny,)
-    def get_mpesa_total(self):
-        today = dt.date.today()
-        try:
-            return LogMpesa.objects.all().filter(date=today).aggregate(TOTAL = Sum('amount'))['TOTAL']
-        except LogMpesa.DoesNotExist:
-            return Http404
-
-    def get(self, request, format=None):
-        today = dt.date.today()
-        mpesa_total = LogMpesa.objects.all().filter(date=today).aggregate(TOTAL = Sum('amount'))['TOTAL']
-        serializers = LogMpesaSerializer(mpesa_total,many=False)
-        return Response(serializers.data)
-
-    def post(self, request, format=None):
-        serializers = LogMpesaSerializer(data=request.data)
-        if serializers.is_valid():
-            serializers.save()
-            return Response(serializers.data, status=status.HTTP_201_CREATED)
-        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class TotalPetrolReceivedToday(APIView):
-    permission_classes=(AllowAny,)
-    def get_fuel_received(self):
-        today = dt.date.today()
-        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
-        print(petrol_info)
-        petrol_id = petrol_info.id
-        log_details = Log.objects.all().filter(pk=petrol_id).first() 
-        if log_details:
-            log_date = log_details.date
-            try:
-                return FuelReceived.objects.all().filter(fuel_id=petrol_id).filter(date_received=log_date).last()
-            except FuelReceived.DoesNotExist:
-                return Http404
-        else:
-            Http404
-
-
-    def get(self, request, format=None):
-        today = dt.date.today()
-        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
-        print(petrol_info)
-        print(petrol_info.id)
-        petrol_id = petrol_info.id
-        
-        log_details = Log.objects.all().filter(pk=petrol_id).first() 
-        if log_details:
-            log_date = log_details.date
-            fuel_received = FuelReceived.objects.all().filter(fuel_id=petrol_id).filter(date_received=log_date).last()
-            if fuel_received:
-                fuel_received.total_fuel_received_today = FuelReceived.objects.all().filter(fuel_id=petrol_id).filter(date_received=log_date).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-                fuel_received.fuel_name = fuel_received.fuel.fuel_type
-                fuel_received.save()
-                fuel_received.refresh_from_db()
-        serializers = FuelReceivedSerializer(fuel_received,many=False)
-        return Response(serializers.data)
-
-class TotalDieselReceivedToday(APIView):
-    permission_classes=(AllowAny,)
-    def get_fuel_received(self):
-        today = dt.date.today()
-        diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
-        print(diesel_info)
-        diesel_id = diesel_id.id
-        log_details = Log.objects.all().filter(pk=diesel_id).first() 
-        if log_details:
-            log_date = log_details.date
-            try:
-                return FuelReceived.objects.all().filter(fuel_id=diesel_id).filter(date_received=log_date).last()
-            except FuelReceived.DoesNotExist:
-                return Http404
-        else:
-            Http404
-
-    def get(self, request, format=None):
-        today = dt.date.today()
-        diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
-        print(diesel_info)
-        diesel_id = diesel_id.id
-        log_details = Log.objects.all().filter(pk=diesel_id).first() 
-        if log_details:
-            log_date = log_details.date
-            fuel_received = FuelReceived.objects.all().filter(fuel_id=diesel_id).filter(date_received=log_date).last()
-            if fuel_received:
-                fuel_received.total_fuel_received_today = FuelReceived.objects.all().filter(fuel_id=diesel_id).filter(date_received=log_date).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-                fuel_received.fuel_name = fuel_received.fuel.fuel_type
-                fuel_received.save()
-                fuel_received.refresh_from_db()
-        serializers = FuelReceivedSerializer(fuel_received,many=False)
-        return Response(serializers.data)
-
-class TotalGasReceivedToday(APIView):
-    permission_classes=(AllowAny,)
-    def get_fuel_received(self):
-        today = dt.date.today()
-        gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
-        print(gas_info)
-        gas_id = gas_info.id
-        log_details = Log.objects.all().filter(pk=gas_id).first() 
-        if log_details:
-            log_date = log_details.date
-            try:
-                return FuelReceived.objects.all().filter(fuel_id=gas_id).filter(date_received=log_date).last()
-            except FuelReceived.DoesNotExist:
-                return Http404
-        else:
-            Http404
-
-    def get(self, request, format=None):
-        today = dt.date.today()
-        gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
-        print(gas_info)
-        gas_id = gas_info.id
-        log_details = Log.objects.all().filter(pk=gas_id).first() 
-        if log_details:
-            log_date = log_details.date
-            fuel_received = FuelReceived.objects.all().filter(fuel_id=gas_id).filter(date_received=log_date).last()
-            if fuel_received:
-                fuel_received.total_fuel_received_today = FuelReceived.objects.all().filter(fuel_id=gas_id).filter(date_received=log_date).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-                fuel_received.fuel_name = fuel_received.fuel.fuel_type
-                fuel_received.save()
-                fuel_received.refresh_from_db()
-        serializers = FuelReceivedSerializer(fuel_received,many=False)
-        return Response(serializers.data)
-
-class FuelReceivedToday(APIView):
+class AllFuelReceivedToday(APIView):
     permission_classes=(AllowAny,)
     def get_fuel_received(self):
         today = dt.date.today()
@@ -514,15 +1155,13 @@ class FuelReceivedToday(APIView):
 
 class PetrolReceivedTodayInfo(APIView):
     permission_classes=(AllowAny,)
-    def get_fuel_received_info(self):
+    def get_fuel_received_info(self,id):
         petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         if petrol_info:
-            print(petrol_info)
-            print(petrol_info.id)
             petrol_id = petrol_info.id
         else:
             Http404
-        log_details = Log.objects.all().filter(pk=petrol_id).first() 
+        log_details = Log.objects.all().filter(id=id).filter(fuel_id=petrol_id).first() 
         if log_details:
             log_date = log_details.date
             try:
@@ -532,7 +1171,7 @@ class PetrolReceivedTodayInfo(APIView):
         else:
             Http404
     
-    def get(self, request, format=None):
+    def get(self, request, id, format=None):
         today = dt.date.today()
         petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         if petrol_info:
@@ -541,7 +1180,7 @@ class PetrolReceivedTodayInfo(APIView):
             petrol_id = petrol_info.id
         else:
             Http404
-        log_details = Log.objects.all().filter(pk=petrol_id).first() 
+        log_details = Log.objects.all().filter(id=id).filter(fuel_id=petrol_id).first() 
         if log_details:
             log_date = log_details.date
             petrol_received_info = FuelReceived.objects.all().filter(fuel_id=petrol_id).last()
@@ -557,7 +1196,7 @@ class PetrolReceivedTodayInfo(APIView):
 
 class DieselReceivedTodayInfo(APIView):
     permission_classes=(AllowAny,)
-    def get_fuel_received_info(self):
+    def get_fuel_received_info(self,id):
         diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
         if diesel_info:
             print(diesel_info)
@@ -565,7 +1204,7 @@ class DieselReceivedTodayInfo(APIView):
             diesel_id = diesel_info.id
         else:
             Http404
-        log_details = Log.objects.all().filter(pk=diesel_id).first() 
+        log_details = Log.objects.all().filter(id=id).filter(fuel_id=diesel_id).first() 
         if log_details:
             log_date = log_details.date
             try:
@@ -575,7 +1214,7 @@ class DieselReceivedTodayInfo(APIView):
         else:
             Http404
     
-    def get(self, request, format=None):
+    def get(self, request, id, format=None):
         today = dt.date.today()
         diesel_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
         if diesel_info:
@@ -584,7 +1223,7 @@ class DieselReceivedTodayInfo(APIView):
             diesel_id = diesel_info.id
         else:
             Http404
-        log_details = Log.objects.all().filter(pk=diesel_id).first() 
+        log_details = Log.objects.all().filter(id=id).filter(fuel_id=diesel_id).first() 
         if log_details:
             log_date = log_details.date
             diesel_received_info = FuelReceived.objects.all().filter(fuel_id=diesel_id).last()
@@ -599,7 +1238,7 @@ class DieselReceivedTodayInfo(APIView):
 
 class GasReceivedTodayInfo(APIView):
     permission_classes=(AllowAny,)
-    def get_fuel_received_info(self):
+    def get_fuel_received_info(self,id):
         gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
         if gas_info:
             print(gas_info)
@@ -607,7 +1246,7 @@ class GasReceivedTodayInfo(APIView):
             gas_id = gas_info.id
         else:
             Http404
-        log_details = Log.objects.all().filter(pk=gas_id).first() 
+        log_details = Log.objects.all().filter(id=id).filter(fuel_id=gas_id).first() 
         if log_details:
             log_date = log_details.date
             try:
@@ -617,7 +1256,7 @@ class GasReceivedTodayInfo(APIView):
         else:
             Http404
     
-    def get(self, request, format=None):
+    def get(self, request, id, format=None):
         today = dt.date.today()
         gas_info = Fuel.objects.all().filter(fuel_type='Gas').last()
         if gas_info:
@@ -626,7 +1265,7 @@ class GasReceivedTodayInfo(APIView):
             gas_id = gas_info.id
         else:
             Http404
-        log_details = Log.objects.all().filter(pk=gas_id).first() 
+        log_details = Log.objects.all().filter(id=id).filter(fuel_id=gas_id).first() 
         if log_details:
             log_date = log_details.date
             gas_received_info = FuelReceived.objects.all().filter(fuel_id=gas_id).last()
@@ -650,162 +1289,11 @@ class LogDetails(APIView):
     
     def get(self, request, id, format=None):
         log_details = Log.objects.all().filter(pk=id).first()
-        today = dt.date.today()
-        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
-        log_details.total_litres_sold = ExpressionWrapper(F('eod_reading_yesterday')-F('eod_reading_lts'),output_field=DecimalField())
-        log_details.save()
-        log_details.refresh_from_db()
-        total_sold = log_details.total_litres_sold
-        if log_details:
-            log_date = log_details.date
-            petrol_received = FuelReceived.objects.all().filter(fuel_id=1).filter(date_received=log_date).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-        yesterday = today - dt.timedelta(days=1)
-        yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).first()
-        if log_details and petrol_info:
-            petrol_pp = petrol_info.price_per_litre 
-            log_details.fuel_name = log_details.fuel.fuel_type
-            log_details.save()
-            log_details.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
-            log_details.save()
-            total_sold = log_details.total_litres_sold
-            log_details.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (petrol_pp),output_field=PositiveIntegerField())
-            log_details.save()
-            log_details.refresh_from_db()
-            log_details.logged_by = request.user.username 
-            log_details.save()
-            # user_id = MyUser.objects.get(id=c_user_id)
-            # log_details.user_id = user_id
-            # log_details.save()
-            # log_details.refresh_from_db()
-            if yesterday_petrol_logs:
-                eod_yesterday = yesterday_petrol_logs.eod_reading_lts
-                log_details.eod_reading_yesterday = eod_yesterday
-                log_details.save()
-                bal_yesterday = yesterday_petrol_logs.balance
-                log_details.balance_yesterday = bal_yesterday
-                log_details.save()
-                yesterday_bal = log_details.balance_yesterday
-                log_details.balance = F('balance_yesterday') - F('total_litres_sold')
-                log_details.save()
-                log_details.refresh_from_db()
-                bal = log_details.balance 
-            else:
-                init = petrol_info.initial_litres_in_tank
-                log_details.balance = (init) - F('total_litres_sold')
-                bal = log_details.balance 
-            if bal and petrol_received:
-                petrol_amount = petrol_received
-                log_details.updated_balance = F('balance')+ (petrol_received)
-                log_details.save()
-                log_details.refresh_from_db()              
-            elif log_details.updated_balance and petrol_received:
-                petrol_amount = petrol_received
-                log_details.updated_balance = F('updated_balance')+ (petrol_amount)
-                log_details.save(update_fields=['updated_balance'])
-                log_details.refresh_from_db() 
-        
         serializers = LogSerializer(log_details,many=False)
         return Response(serializers.data)
 
     def put(self, request, id, format=None):
         log_details = Log.objects.all().filter(pk=id).first()
-        serializers = LogSerializer(log_details,request.data)
-        if serializers.is_valid():
-            serializers.save()
-            return Response(serializers.data)
-        else:
-            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class PetrolLogDetails(APIView):
-    permission_classes=(AllowAny,)
-    def get_log_details(self,id):
-        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
-        if petrol_info:
-            print(petrol_info)
-            print(petrol_info.id)
-            petrol_id = petrol_info.id
-        else:
-            Http404
-        try:
-            return Log.objects.all().filter(pk=id).filter(fuel_id=petrol_id).first()
-        except Log.DoesNotExist:
-            return Http404
-    
-    def get(self, request, id, format=None):
-        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
-        if petrol_info:
-            print(petrol_info)
-            print(petrol_info.id)
-            petrol_id = petrol_info.id
-        else:
-            Http404
-        log_details = Log.objects.all().filter(pk=id).filter(fuel_id=petrol_id).first()
-        today = dt.date.today()
-        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
-        if log_details:
-            log_details.total_litres_sold = ExpressionWrapper(F('eod_reading_yesterday')-F('eod_reading_lts'),output_field=DecimalField())
-            log_details.save()
-            log_details.refresh_from_db()
-            # total_sold = log_details.total_litres_sold
-            log_date = log_details.date
-        petrol_received = FuelReceived.objects.all().filter(fuel_id=petrol_id).filter(date_received=log_date).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-        yesterday = today - dt.timedelta(days=1)
-        yesterday_petrol_logs = Log.objects.all().filter(date=yesterday).first()
-        if log_details and petrol_info:
-            petrol_pp = petrol_info.price_per_litre 
-            log_details.fuel_name = log_details.fuel.fuel_type
-            log_details.save()
-            log_details.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
-            log_details.save()
-            total_sold = log_details.total_litres_sold
-            log_details.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (petrol_pp),output_field=PositiveIntegerField())
-            log_details.save()
-            log_details.refresh_from_db()
-            log_details.logged_by = request.user.username 
-            log_details.save()
-            # user_id = MyUser.objects.get(id=c_user_id)
-            # log_details.user_id = user_id
-            # log_details.save()
-            # log_details.refresh_from_db()
-            if yesterday_petrol_logs:
-                eod_yesterday = yesterday_petrol_logs.eod_reading_lts
-                log_details.eod_reading_yesterday = eod_yesterday
-                log_details.save()
-                bal_yesterday = yesterday_petrol_logs.balance
-                log_details.balance_yesterday = bal_yesterday
-                log_details.save()
-                yesterday_bal = log_details.balance_yesterday
-                log_details.balance = F('balance_yesterday') - F('total_litres_sold')
-                log_details.save()
-                log_details.refresh_from_db()
-                bal = log_details.balance 
-            else:
-                init = petrol_info.initial_litres_in_tank
-                log_details.balance = (init) - F('total_litres_sold')
-                bal = log_details.balance 
-            if bal and petrol_received:
-                petrol_amount = petrol_received
-                log_details.updated_balance = F('balance')+ (petrol_received)
-                log_details.save()
-                log_details.refresh_from_db()              
-            elif log_details.updated_balance and petrol_received:
-                petrol_amount = petrol_received
-                log_details.updated_balance = F('updated_balance')+ (petrol_amount)
-                log_details.save(update_fields=['updated_balance'])
-                log_details.refresh_from_db() 
-        
-        serializers = LogSerializer(log_details,many=False)
-        return Response(serializers.data)
-
-    def put(self, request, id, format=None):
-        petrol_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
-        if petrol_info:
-            print(petrol_info)
-            print(petrol_info.id)
-            petrol_id = petrol_info.id
-        else:
-            Http404
-        log_details = Log.objects.all().filter(pk=id).filter(fuel_id=petrol_id).first()
         serializers = LogSerializer(log_details,request.data)
         if serializers.is_valid():
             serializers.save()
@@ -822,7 +1310,6 @@ class MpesaLogDetails(APIView):
             return Http404
     
     def get(self, request, id, format=None):
-        today = dt.date.today()
         mpesa_details = LogMpesa.objects.all().filter(id=id).last()
         if mpesa_details:
             mpesa_date = mpesa_details.date

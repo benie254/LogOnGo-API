@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Site
+from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Pump, Site
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.validators import UniqueValidator
@@ -17,15 +17,20 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 
 
+class PumpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pump 
+        fields = ('pump_name','date','balance','updated_balance','balance_yesterday','total_litres_sold_today','amount_earned_today')
+
 class FuelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fuel 
-        fields = ('id','fuel_type','price_per_litre','pumps','initial_litres_in_tank',)
+        fields = ('id','fuel_type','price_per_litre','pumps','initial_litres_in_tank','total_litres_sold_today','balance','updated_balance','balance_yesterday')
 
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log 
-        fields = ('id','fuel','fuel_name','date','eod_reading_lts','eod_reading_yesterday','total_litres_sold','amount_earned_today','balance','updated_balance','balance_yesterday','first_logged','last_edited','user_id','logged_by',)
+        fields = ('id','fuel','fuel_name','pump','pump_name','date','eod_reading_lts','eod_reading_yesterday','total_litres_sold','amount_earned_today','first_logged','last_edited','user_id','logged_by',)
 
 class LogMpesaSerializer(serializers.ModelSerializer):
     class Meta:

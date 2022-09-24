@@ -240,21 +240,40 @@ class Fuel(models.Model):
     price_per_litre = models.DecimalField(max_digits=5,decimal_places=2)
     pumps = models.PositiveIntegerField()
     initial_litres_in_tank = models.DecimalField(max_digits=8,decimal_places=2)
+    date = models.DateField(default=timezone.now,null=True,blank=True)
+    balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    updated_balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    balance_yesterday = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    total_litres_sold_today = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True)
 
     def __int__(self):
         return self.price_per_litre
 
+class Pump(models.Model):
+    PUMPS = (('Pump One','Pump One'),('Pump Two','Pump Two'),('Pump Three','Pump Three'),('Pump Four','Pump Four'))
+    pump_name = models.CharField(max_length=60,choices=PUMPS,default='')
+    initial_litres_in_tank = models.DecimalField(max_digits=8,decimal_places=2,default=0)
+    date = models.DateField(default=timezone.now,null=True,blank=True)
+    balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    updated_balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    balance_yesterday = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    total_litres_sold_today = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True)
+
+    def __str__(self):
+        return self.pump_name
+    
 class Log(models.Model):
     date = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     fuel_name = models.CharField(max_length=60,null=True,blank=True)
+    pump = models.ForeignKey(Pump,on_delete=models.CASCADE,null=True)
+    pump_name = models.CharField(max_length=60,null=True,blank=True)
     eod_reading_lts = models.DecimalField(max_digits=19,decimal_places=2)
     eod_reading_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
-    total_litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    total_litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True,default=0)
     amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True)
-    balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
-    updated_balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
-    balance_yesterday = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
     first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
     user_id = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
@@ -327,6 +346,7 @@ class FuelReceived(models.Model):
     received_from = models.CharField(max_length=100)
     date_received = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
+    pump = models.ForeignKey(Pump,on_delete=models.CASCADE,null=True)
     fuel_name = models.CharField(max_length=60,null=True,blank=True)
     total_fuel_received_today = models.PositiveIntegerField(default=0,null=True,blank=True)
 
