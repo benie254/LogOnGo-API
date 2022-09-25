@@ -21,6 +21,7 @@ urlpatterns = [
     url(r'^pump-one-info/$', api_views.PumpOneInfo.as_view(),name='pump_one_info'),
     url(r'^pump-two-info/$', api_views.PumpTwoInfo.as_view(),name='pump_two_info'),
     url(r'^pump-three-info/$', api_views.PumpThreeInfo.as_view(),name='pump_three_info'), 
+    url(r'^pump-four-info/$', api_views.PumpFourInfo.as_view(),name='pump_four_info'), 
     url(r'^all-logs/$', api_views.AllLogs.as_view(),name='all_logs'),
     url(r'^logs-today/$', api_views.TodayLogs.as_view(),name='logs_today'),
     url(r'^user-logs/(\d+)$', api_views.UserLogs.as_view(),name='user_logs'),

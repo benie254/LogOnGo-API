@@ -193,6 +193,28 @@ class PumpThreeInfo(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class PumpFourInfo(APIView):
+    permission_classes=(AllowAny,)
+    def get_pump_info(self):
+        try:
+            return Pump.objects.all().filter(pump_name='Pump Four').last()
+        except Pump.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        pump_info = Pump.objects.all().filter(pump_name='Pump Four').last()
+        serializers = PumpSerializer(pump_info,many=False)
+        return Response(serializers.data)
+
+    def put(self, request, format=None):
+        pump_info = Pump.objects.all().filter(pump_name='Pump Four').last()
+        serializers = PumpSerializer(pump_info,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class AllLogs(APIView):
     permission_classes=(AllowAny,)
