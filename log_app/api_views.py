@@ -969,6 +969,7 @@ class TodayFuelLogs(APIView):
     def get_today_fuel_logs(self,id):
         today = dt.date.today()
         try:
+            petrol = Fuel.objects.all().filter(fuel_type='Petrol')
             pump_one = Pump.objects.all().filter(pump_name='Pump One').first()
             pump_one_id = pump_one.id
             return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_one_id).first()

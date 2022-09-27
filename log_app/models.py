@@ -346,7 +346,7 @@ class FuelReceived(models.Model):
     received_from = models.CharField(max_length=100)
     date_received = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
-    pump = models.ForeignKey(Pump,on_delete=models.CASCADE,null=True)
+    # pump = models.ForeignKey(Pump,on_delete=models.CASCADE,null=True)
     fuel_name = models.CharField(max_length=60,null=True,blank=True)
     total_fuel_received_today = models.PositiveIntegerField(default=0,null=True,blank=True)
 
