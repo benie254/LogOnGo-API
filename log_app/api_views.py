@@ -980,7 +980,6 @@ class TodayFuelLogs(APIView):
         pump_one = Pump.objects.all().filter(pump_name='Pump One').first()
         pump_one_id = pump_one.id
         today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_one_id).first()
-        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_one_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
         yesterday_fuel_logs = Log.objects.all().filter(fuel_id=id).filter(pump_id=pump_one_id).filter(date=yesterday).first()
         fuel_info = Fuel.objects.all().filter(id=id).last()
