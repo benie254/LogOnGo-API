@@ -45,7 +45,7 @@ class FuelReceivedSerializer(serializers.ModelSerializer):
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident  
-        fields = ('id','nature','description','reporter','your_name','incident_date','date_and_time_reported',)
+        fields = ('id','nature','description','reporter','your_name','your_email','incident_date','date_and_time_reported',)
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:

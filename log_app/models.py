@@ -360,6 +360,7 @@ class Incident(models.Model):
     description = models.TextField(max_length=5000)
     reporter = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     your_name = models.CharField(max_length=120,null=True,blank=True)
+    your_email = models.EmailField(max_length=250,null=True,blank=True)
     incident_date = models.DateField(default=timezone.now)
     date_and_time_reported = models.DateTimeField(auto_now_add=True,null=True)
 

@@ -6,12 +6,12 @@ from django.shortcuts import get_object_or_404, render,redirect
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import FuelReceivedSerializer, FuelSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer, PumpSerializer
+from log_app.serializer import ContactSerializer, FuelReceivedSerializer, FuelSerializer, IncidentSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer, PumpSerializer
 
 
 from django.http import HttpResponse,Http404, JsonResponse
 from django.contrib.auth.decorators import login_required
-from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Pump 
+from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Pump, Incident
 import datetime as dt 
 from django.db.models import Sum
 from django.contrib import messages
@@ -969,7 +969,6 @@ class TodayFuelLogs(APIView):
     def get_today_fuel_logs(self,id):
         today = dt.date.today()
         try:
-            petrol = Fuel.objects.all().filter(fuel_type='Petrol')
             pump_one = Pump.objects.all().filter(pump_name='Pump One').first()
             pump_one_id = pump_one.id
             return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_one_id).first()
@@ -1532,6 +1531,110 @@ class EmailMpesaReport(APIView):
                 to_emails = receiver,
                 subject = "Your Mpesa report",
                 html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
+            )
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Email report sent  successfully',
+                }
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class IncidentReport(APIView):
+    permission_classes=(AllowAny,)
+    def get_incident_reports(self):
+        try:
+            return Incident.objects.all()
+        except IncidentReport.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        reports = Incident.objects.all()
+        serializers = IncidentSerializer(reports,many=True)
+        return Response(serializers.data)
+
+    def post(self, request,format=None):
+        serializers = IncidentSerializer(data=request.data)
+        if serializers.is_valid():
+            # serializer.is_valid(raise_exception=True)
+            nature=serializers.validated_data['nature']
+            description=serializers.validated_data['description']
+            username=serializers.validated_data['your_name']
+            incident_date=serializers.validated_data['incident_date']
+            # date_and_time_reported=serializers.validated_data['date_and_time_reported']
+            sender=serializers.validated_data['your_email']
+            receiver='fullstack.benie@gmail.com'
+            admin='Janja'
+            serializers.save()
+            
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            msg = "An incident has been reported on LogOnGo. Here are the details::</p> <br> <ul><li>nature: " + str(nature) + " </li><li>description: " + str(description) + "</li><li>reported by: " + str(username) + " </li><li>report email: " + str(sender) + "</li><li>incident date: " + str(incident_date) + "</li></ul> <br> <small> The contact team, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = "Incident Report",
+                html_content='<p>Hello, ' + str(admin) + '! <br><br>' + msg
+            )
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Email report sent  successfully',
+                }
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ContactAdmin(APIView):
+    permission_classes=(AllowAny,)
+    def get_incident_reports(self):
+        try:
+            return Contact.objects.all()
+        except Contact.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        reports = Contact.objects.all()
+        serializers = ContactSerializer(reports,many=True)
+        return Response(serializers.data)
+
+    def post(self, request,format=None):
+        serializers = ContactSerializer(data=request.data)
+        if serializers.is_valid():
+            # serializer.is_valid(raise_exception=True)
+            contact_subject=serializers.validated_data['subject']
+            contact_message=serializers.validated_data['message']
+            your_name=serializers.validated_data['your_name']
+            sender=serializers.validated_data['your_email']
+            # date_and_time_reported=serializers.validated_data['date_and_time_reported']
+            receiver='fullstack.benie@gmail.com'
+            admin='Janja'
+            serializers.save()
+            
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            msg = "You have received a message on LogOnGo from " + str(your_name) + " of the email: " + str(sender) + ". Here is the message::</p> <br> <p>" + str(contact_message) + "</p> <br> <small> The contact team, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = contact_subject,
+                html_content='<p>Hello, ' + str(admin) + '! <br><br>' + msg
             )
             try:
                 sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
