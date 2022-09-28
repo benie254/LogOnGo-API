@@ -19,7 +19,9 @@ from django.contrib import messages
 from django.db.models import Max, Min,F, ExpressionWrapper, DecimalField, PositiveIntegerField
 
 from log_app.models import Announcement, Contact, Incident, Log, LogMpesa
-from rest_framework.permissions import AllowAny,AllowAny
+from rest_framework.permissions import AllowAny
+from rest_framework.pagination import PageNumberPagination
+from django.core.paginator import Paginator
 # Create your views here.
 class Announcements(APIView):
     permission_classes=(AllowAny,)
@@ -215,6 +217,10 @@ class PumpFourInfo(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 5
 
 class AllLogs(APIView):
     permission_classes=(AllowAny,)
@@ -225,7 +231,7 @@ class AllLogs(APIView):
             return Http404
 
     def get(self, request, format=None):
-        all_logs = Log.objects.all()
+        all_logs = Log.objects.all().order_by('-date')
         serializers = LogSerializer(all_logs,many=True)
         return Response(serializers.data)
 

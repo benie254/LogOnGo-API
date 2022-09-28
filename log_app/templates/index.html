@@ -25,6 +25,25 @@
 </head>
 
 <body>
+    <h1>Pagination</h1>
+    {%for p in page_obj%}eod:{{p.eod_reading_lts}}{%endfor%}
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+    
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
     <h1>logged by: {{</h1>
     <ul>
         <p>Our endpoints:</p>
@@ -130,18 +149,7 @@
             <a href="{% url 'user_mpesa_logs' u.id %}">User Mpesa logs</a>
         </li>
         {%endfor%}
-        <li>
-            <a href="{% url 'fuel_received_today' %}">All fuel received today</a>
-        </li>
-        <li>
-            <a href="{% url 'petrol_received_today-info' %}">Petrol received today info</a>
-        </li>
-        <li>
-            <a href="{% url 'diesel_received_today-info' %}">Diesel received today info</a>
-        </li>
-        <li>
-            <a href="{% url 'gas_received_today-info' %}">Gas received today info</a>
-        </li>
+
         {%for l in logs%}
         <li>
             <a href="{% url 'log_details' l.id %}">Log details</a>
