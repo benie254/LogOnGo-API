@@ -217,11 +217,6 @@ class PumpFourInfo(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 5
-    page_size_query_param = 'page_size'
-    max_page_size = 5
-
 class AllLogs(APIView):
     permission_classes=(AllowAny,)
     def get_all_logs(self):
