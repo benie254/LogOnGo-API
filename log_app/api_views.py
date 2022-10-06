@@ -1532,6 +1532,9 @@ class LogDetails(APIView):
             log_details.fuel_name = log_details.fuel.fuel_type
             log_details.save()
             log_details.refresh_from_db()
+            log_details.price_per_litre = log_details.fuel.price_per_litre
+            log_details.save()
+            log_details.refresh_from_db()
         serializers = LogSerializer(log_details,many=False)
         return Response(serializers.data)
 

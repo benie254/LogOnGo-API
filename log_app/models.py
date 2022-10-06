@@ -268,6 +268,7 @@ class Log(models.Model):
     date = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     fuel_name = models.CharField(max_length=60,null=True,blank=True)
+    price_per_litre = models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True)
     pump = models.ForeignKey(Pump,on_delete=models.CASCADE,null=True)
     pump_name = models.CharField(max_length=60,null=True,blank=True)
     eod_reading_lts = models.DecimalField(max_digits=19,decimal_places=2)
