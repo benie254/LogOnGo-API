@@ -6,12 +6,12 @@ from django.shortcuts import get_object_or_404, render,redirect
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import ContactSerializer, FuelReceivedSerializer, FuelSerializer, IncidentSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer, PumpSerializer
+from log_app.serializer import ContactSerializer, CreditCardReportSerializer, FuelReceivedSerializer, FuelSerializer, IncidentSerializer, LogCreditCardSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer, PumpSerializer
 
 
 from django.http import HttpResponse,Http404, JsonResponse
 from django.contrib.auth.decorators import login_required
-from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Pump, Incident
+from log_app.models import CreditCardReport, Fuel, FuelReceived, LogCreditCard, LogReport, MpesaReport, MyUser, Pump, Incident
 import datetime as dt 
 from django.db.models import Sum
 from django.contrib import messages
@@ -256,12 +256,12 @@ class UserLogs(APIView):
     permission_classes=(AllowAny,)
     def get_user_logs(self,id):
         try:
-            return Log.objects.all().filter(user_id=id).order_by('-date')
+            return Log.objects.all().filter(user=id).order_by('-date')
         except Log.DoesNotExist:
             return Http404
 
     def get(self, request, id, format=None):
-        user_logs = Log.objects.all().filter(user_id=id).order_by('-date')
+        user_logs = Log.objects.all().filter(user_id_id=id).order_by('-date')
         serializers = LogSerializer(user_logs,many=True)
         return Response(serializers.data)
 
@@ -1032,7 +1032,7 @@ class TodayFuelLogsTwo(APIView):
         pump_two_id = pump_two.id
         today = dt.date.today()
         today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_two_id).first()
-        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_two_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_two_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
         yesterday_log_two = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_two_id).first()
         fuel_info = Fuel.objects.all().filter(id=id).last()
@@ -1084,7 +1084,7 @@ class TodayFuelLogsThree(APIView):
         pump_three = Pump.objects.all().filter(pump_name='Pump Three').first()
         pump_three_id = pump_three.id
         today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_three_id).first()
-        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_three_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_three_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
         yesterday_log_three = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_three_id).first()
         fuel_info = Fuel.objects.all().filter(id=id).last()
@@ -1136,7 +1136,7 @@ class TodayFuelLogsFour(APIView):
         pump_four = Pump.objects.all().filter(pump_name='Pump Three').first()
         pump_four_id = pump_four.id
         today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_four_id).first()
-        fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_four_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+        # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_four_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         yesterday = today - dt.timedelta(days=1)
         yesterday_log_four = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_four_id).first()
         fuel_info = Fuel.objects.all().filter(id=id).last()
@@ -1185,6 +1185,19 @@ class AllMpesaLogs(APIView):
         serializers = LogMpesaSerializer(all_mpesa_logs,many=True)
         return Response(serializers.data)
 
+class AllCreditCardLogs(APIView):
+    permission_classes=(AllowAny,)
+    def get_all_credit_card_logs(self):
+        try:
+            return LogCreditCard.objects.all()
+        except LogCreditCard.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        all_credit_card_logs = LogCreditCard.objects.all()
+        serializers = LogMpesaSerializer(all_credit_card_logs,many=True)
+        return Response(serializers.data)
+
 class TodayMpesaLogs(APIView):
     permission_classes=(AllowAny,)
     def get_today_mpesa_logs(self):
@@ -1196,8 +1209,15 @@ class TodayMpesaLogs(APIView):
 
     def get(self, request, format=None):
         today = dt.date.today()
+        first_mpesa_log = LogMpesa.objects.all().filter(date=today).first()
         today_mpesa_logs = LogMpesa.objects.all().filter(date=today)
-        serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
+        if first_mpesa_log:
+            today_mpesa_logs = LogMpesa.objects.all().filter(date=today)
+            serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
+        else:
+            Http404
+            first_mpesa_log = LogMpesa.objects.all().filter(date=today).first()
+            serializers = LogMpesaSerializer(first_mpesa_log,many=False)
         return Response(serializers.data)
 
     def post(self, request, format=None):
@@ -1206,6 +1226,29 @@ class TodayMpesaLogs(APIView):
             serializers.save()
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TodayCreditCardLogs(APIView):
+    permission_classes=(AllowAny,)
+    def get_today_credit_card_logs(self):
+        today = dt.date.today()
+        try:
+            return LogCreditCard.objects.all().filter(date=today)
+        except LogCreditCard.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        today = dt.date.today()
+        today_credit_card_logs = LogCreditCard.objects.all().filter(date=today)
+        serializers = LogCreditCardSerializer(today_credit_card_logs,many=True)
+        return Response(serializers.data)
+
+    def post(self, request, format=None):
+        serializers = LogCreditCardSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserMpesaLogs(APIView):
     permission_classes=(AllowAny,)
@@ -1218,6 +1261,19 @@ class UserMpesaLogs(APIView):
     def get(self, request, id, format=None):
         user_mpesa_logs = LogMpesa.objects.all().filter(user=id).order_by('-date')
         serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
+        return Response(serializers.data)
+
+class UserCreditCardLogs(APIView):
+    permission_classes=(AllowAny,)
+    def get_user_credit_card_logs(self,id):
+        try:
+            return LogCreditCard.objects.all().filter(user=id).order_by('-date')
+        except LogCreditCard.DoesNotExist:
+            return Http404
+
+    def get(self, request, id, format=None):
+        user_credit_card_logs = LogCreditCard.objects.all().filter(user=id).order_by('-date')
+        serializers = LogCreditCardSerializer(user_credit_card_logs,many=True)
         return Response(serializers.data)
 
 class AllFuelReceivedToday(APIView):
@@ -1584,6 +1640,43 @@ class MpesaLogDetails(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class CreditCardLogDetails(APIView):
+    permission_classes=(AllowAny,)
+    def get_credit_card_details(self,id):
+        try:
+            return LogCreditCard.objects.all().filter(id=id).last()
+        except LogCreditCard.DoesNotExist:
+            return Http404
+    
+    def get(self, request, id, format=None):
+        credit_card_details = LogCreditCard.objects.all().filter(id=id).last()
+        if credit_card_details:
+            credit_card_date = credit_card_details.date
+        credit_card_today = LogCreditCard.objects.all().filter(date=credit_card_date)
+        if credit_card_details and credit_card_today:
+            credit_card_details.daily_total = LogCreditCard.objects.all().filter(date=credit_card_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
+            credit_card_details.save()
+            credit_card_details.cumulative_amount = LogCreditCard.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
+            credit_card_details.save()
+            credit_card_details.refresh_from_db()
+        elif credit_card_details:
+            credit_card_details.daily_total = 0
+            credit_card_details.save()
+            credit_card_details.cumulative_amount = LogCreditCard.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
+            credit_card_details.save()
+            credit_card_details.refresh_from_db()
+        serializers = LogCreditCardSerializer(credit_card_details,many=False)
+        return Response(serializers.data)
+
+    def put(self, request, id, format=None):
+        credit_card_details = LogCreditCard.objects.all().filter(id=id).first()
+        serializers = LogCreditCardSerializer(credit_card_details,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        else:
+            return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class PastLogs(APIView):
     permission_classes=(AllowAny,)
     def get_past_logs(self,past_date):
@@ -1704,6 +1797,61 @@ class EmailMpesaReport(APIView):
                 }
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmailCreditCardReport(APIView):
+    permission_classes=(AllowAny,)
+    def get_credit_card_reports(self):
+        try:
+            return CreditCardReport.objects.all()
+        except CreditCardReport.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        reports = CreditCardReport.objects.all()
+        serializers = CreditCardReportSerializer(reports,many=True)
+        return Response(serializers.data)
+
+    def post(self, request,format=None):
+        serializers = CreditCardReportSerializer(data=request.data)
+        if serializers.is_valid():
+            # serializer.is_valid(raise_exception=True)
+            date=serializers.validated_data['date']
+            card_name=serializers.validated_data['transaction_number']
+            card_number=serializers.validated_data['customer_name']
+            amount=serializers.validated_data['amount']
+            amount_transferred_to_bank=serializers.validated_data['amount_transferred_to_bank']
+            daily_total=serializers.validated_data['daily_total']
+            cumulative_amount=serializers.validated_data['cumulative_amount']
+            logged_by=serializers.validated_data['logged_by']
+            username=serializers.validated_data['admin_name']
+            receiver=serializers.validated_data['admin_email']
+            serializers.save()
+            
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            msg = "Here is your requested email report:</p> <br> <ul><li>date: " + str(date) + " </li><li>transaction no.: " + str(transaction_number) + "</li><li>customer's name: " + str(customer_name) + " </li><li>customer's phone number: " + str(customer_phone_number) + "</li><li>amount: " + str(amount) + "</li><li>amount transferred to bank: " + str(amount_transferred_to_bank) + "</li><li>daily total: " + str(daily_total) + "</li><li>cumulative amount: " + str(cumulative_amount) + "</li><li>logged by: " + str(logged_by) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = "Your CreditCard report",
+                html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
+            )
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Email report sent  successfully',
+                }
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class IncidentReport(APIView):

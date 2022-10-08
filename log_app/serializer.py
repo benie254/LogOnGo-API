@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from log_app.models import Fuel, FuelReceived, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Pump, Site
+from log_app.models import Fuel, FuelReceived, LogCreditCard, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Pump, Site
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.validators import UniqueValidator
@@ -37,6 +37,11 @@ class LogMpesaSerializer(serializers.ModelSerializer):
         model = LogMpesa 
         fields = ('id','date','transaction_number','user','logged_by','customer_name','customer_phone_number','amount','amount_transferred_to_bank','daily_total','cumulative_amount','first_logged','last_edited')
 
+class LogCreditCardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogCreditCard
+        fields = ('id','date','card_name','card_number','amount','logged_by')
+
 class FuelReceivedSerializer(serializers.ModelSerializer):
     class Meta:
         model = FuelReceived 
@@ -71,4 +76,8 @@ class MpesaReportSerializer(serializers.ModelSerializer):
         model = MpesaReport 
         fields = ('id','date','transaction_number','customer_name','customer_phone_number','amount','amount_transferred_to_bank','daily_total','cumulative_amount','admin_name','admin_email','logged_by',)
 
-                     
+
+class CreditCardReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogCreditCard
+        fields = ('id','date','card_name','card_number','amount','logged_by','admin_name','admin_email')              

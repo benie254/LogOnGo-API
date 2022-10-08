@@ -16,6 +16,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.validators import MaxValueValidator,MinValueValidator
 
 # Create your models here.
 class MyAccountManager(BaseUserManager):
@@ -342,6 +343,13 @@ class LogMpesa(models.Model):
         past_logs = cls.objects.filter(date=log_date)
         return past_logs
 
+class LogCreditCard(models.Model):
+    amount = models.BigIntegerField(default=0)
+    card_name = models.CharField(max_length=120,default='')
+    card_number = models.IntegerField(validators=[MinValueValidator(9999999999999999),MaxValueValidator(9999999999999999)])
+    date = models.DateField(default=timezone.now)
+    logged_by = models.CharField(max_length=120,null=True,blank=True)
+
 class FuelReceived(models.Model):
     litres_received = models.PositiveIntegerField(default=0)
     received_from = models.CharField(max_length=100)
@@ -356,7 +364,7 @@ class FuelReceived(models.Model):
 
 
 class Incident(models.Model):
-    CHOICES = (('Equipment Failure','Equipment Failure'),('Physical Injury','Physical Injury'),('EMERGENCY','EMERGENCY'))
+    CHOICES = (('equipment','equipment'),('injury','injury'),('emergency','emergency'))
     nature = models.CharField(max_length=100,choices=CHOICES)
     description = models.TextField(max_length=5000)
     reporter = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
@@ -419,3 +427,12 @@ class MpesaReport(models.Model):
 
     def __int__(self):
         return self.transaction_number
+
+class CreditCardReport(models.Model):
+    amount = models.BigIntegerField(null=True,blank=True)
+    card_name = models.CharField(max_length=120,null=True,blank=True)
+    card_number = models.IntegerField(null=True,blank=True)
+    date = models.DateField(default=timezone.now,null=True,blank=True)
+    logged_by = models.CharField(max_length=120,null=True,blank=True)
+    admin_name = models.CharField(max_length=120,null=True,blank=True)
+    admin_email = models.EmailField(max_length=120,null=True,blank=True)
