@@ -1819,16 +1819,14 @@ class EmailCreditCardReport(APIView):
             card_name=serializers.validated_data['transaction_number']
             card_number=serializers.validated_data['customer_name']
             amount=serializers.validated_data['amount']
-            amount_transferred_to_bank=serializers.validated_data['amount_transferred_to_bank']
-            daily_total=serializers.validated_data['daily_total']
-            cumulative_amount=serializers.validated_data['cumulative_amount']
+            
             logged_by=serializers.validated_data['logged_by']
             username=serializers.validated_data['admin_name']
             receiver=serializers.validated_data['admin_email']
             serializers.save()
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-            msg = "Here is your requested email report:</p> <br> <ul><li>date: " + str(date) + " </li><li>transaction no.: " + str(transaction_number) + "</li><li>customer's name: " + str(customer_name) + " </li><li>customer's phone number: " + str(customer_phone_number) + "</li><li>amount: " + str(amount) + "</li><li>amount transferred to bank: " + str(amount_transferred_to_bank) + "</li><li>daily total: " + str(daily_total) + "</li><li>cumulative amount: " + str(cumulative_amount) + "</li><li>logged by: " + str(logged_by) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            msg = "Here is your requested email report:</p> <br> <ul><li>date: " + str(date) + " </li><li>card name.: " + str(card_name) + "</li><li>card number: " + str(card_number) + " </li><li>customer's phone number: " + str(customer_phone_number) + "</li><li>amount: " + str(amount) + "</li><li>amount transferred to bank: " + str(amount_transferred_to_bank) + "</li><li>daily total: " + str(daily_total) + "</li><li>cumulative amount: " + str(cumulative_amount) + "</li><li>logged by: " + str(logged_by) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
             message = Mail(
                 from_email = Email("davinci.monalissa@gmail.com"),
                 to_emails = receiver,
