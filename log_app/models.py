@@ -297,7 +297,9 @@ class Log(models.Model):
             assert False
 
         if date == dt.date.today():
-            return redirect('home') 
+            today = dt.date.today()
+            today_logs = cls.objects.filter(date=today)
+            return today_logs 
 
         past_logs = cls.objects.filter(date=log_date)
         return past_logs
@@ -353,6 +355,25 @@ class LogCreditCard(models.Model):
     card_number = models.IntegerField(validators=[MinValueValidator(9999999999999999),MaxValueValidator(9999999999999999)])
     date = models.DateField(default=timezone.now)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
+
+    @classmethod 
+    def search_by_date(cls,log_date):
+        try:
+        # convert data from the string url
+            date = dt.datetime.strptime(log_date, '%Y-%m-%d').date()
+
+        except ValueError:
+        # raise 404 when value error is thrown
+            raise Http404()
+            assert False
+
+        if date == dt.date.today():
+            today = dt.date.today()
+            today_logs = cls.objects.filter(date=today)
+            return today_logs 
+
+        past_logs = cls.objects.filter(date=log_date)
+        return past_logs
 
 class FuelReceived(models.Model):
     litres_received = models.PositiveIntegerField(default=0)
