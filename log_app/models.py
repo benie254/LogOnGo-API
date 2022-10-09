@@ -345,6 +345,7 @@ class LogMpesa(models.Model):
         return past_logs
 
 class LogCreditCard(models.Model):
+    fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     amount = models.BigIntegerField(default=0)
     card_name = models.CharField(max_length=120,default='')
     card_number = models.IntegerField(validators=[MinValueValidator(9999999999999999),MaxValueValidator(9999999999999999)])
