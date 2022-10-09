@@ -339,7 +339,9 @@ class LogMpesa(models.Model):
             assert False
 
         if date == dt.date.today():
-            return redirect('home') 
+            today = dt.date.today()
+            today_logs = cls.objects.filter(date=today)
+            return today_logs 
 
         past_logs = cls.objects.filter(date=log_date)
         return past_logs
