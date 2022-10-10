@@ -1021,156 +1021,183 @@ class TodayFuelLogsTwo(APIView):
     def get_today_fuel_logs_two(self,id):
         today = dt.date.today()
         pump_two = Pump.objects.all().filter(pump_name='Pump Two').first()
-        pump_two_id = pump_two.id
-        try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_two_id).first()
-        except Log.DoesNotExist:
+        if pump_two:
+            pump_two_id = pump_two.id
+            try:
+                return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_two_id).first()
+            except Log.DoesNotExist:
+                return Http404
+        else:
             return Http404
 
     def get(self, request, id, format=None):
         pump_two = Pump.objects.all().filter(pump_name='Pump Two').first()
-        pump_two_id = pump_two.id
         today = dt.date.today()
-        today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_two_id).first()
-        # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_two_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-        yesterday = today - dt.timedelta(days=1)
-        yesterday_log_two = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_two_id).first()
-        fuel_info = Fuel.objects.all().filter(id=id).last()
-        if today_log_two and fuel_info:
-            price_per_litre = fuel_info.price_per_litre 
-            init = fuel_info.initial_litres_in_tank
-            today_log_two.fuel_name = today_log_two.fuel.fuel_type
-            today_log_two.save()
-            today_log_two.refresh_from_db()
-            today_log_two.pump_name = today_log_two.pump.pump_name
-            today_log_two.save()
-            today_log_two.refresh_from_db()
-            if yesterday_log_two:
-                eod_yesterday = yesterday_log_two.eod_reading_lts
-                today_log_two.eod_reading_yesterday = eod_yesterday
+        if pump_two:
+            pump_two_id = pump_two.id
+            today = dt.date.today()
+            today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_two_id).first()
+            # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_two_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+            yesterday = today - dt.timedelta(days=1)
+            yesterday_log_two = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_two_id).first()
+            fuel_info = Fuel.objects.all().filter(id=id).last()
+            if today_log_two and fuel_info:
+                price_per_litre = fuel_info.price_per_litre 
+                init = fuel_info.initial_litres_in_tank
+                today_log_two.fuel_name = today_log_two.fuel.fuel_type
                 today_log_two.save()
                 today_log_two.refresh_from_db()
-                today_log_two.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_two.pump_name = today_log_two.pump.pump_name
                 today_log_two.save()
                 today_log_two.refresh_from_db()
-                today_log_two.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
-                today_log_two.save()
-                today_log_two.refresh_from_db()
-            else:
-                today_log_two.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
-                today_log_two.save()
-                today_log_two.refresh_from_db()
-                today_log_two.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
-                today_log_two.save()
-                today_log_two.refresh_from_db()
-        else: 
+                if yesterday_log_two:
+                    eod_yesterday = yesterday_log_two.eod_reading_lts
+                    today_log_two.eod_reading_yesterday = eod_yesterday
+                    today_log_two.save()
+                    today_log_two.refresh_from_db()
+                    today_log_two.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                    today_log_two.save()
+                    today_log_two.refresh_from_db()
+                    today_log_two.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                    today_log_two.save()
+                    today_log_two.refresh_from_db()
+                else:
+                    today_log_two.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                    today_log_two.save()
+                    today_log_two.refresh_from_db()
+                    today_log_two.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                    today_log_two.save()
+                    today_log_two.refresh_from_db()
+            else: 
+                Http404
+            serializers = LogSerializer(today_log_two,many=False)
+            return Response(serializers.data)
+        else:
             Http404
-        serializers = LogSerializer(today_log_two,many=False)
-        return Response(serializers.data)
+            today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
+            serializers = LogSerializer(today_log_two,many=False)
+            return Response(serializers.data) 
 
 class TodayFuelLogsThree(APIView):
     permission_classes=(AllowAny,)
     def get_today_fuel_logs_three(self,id):
         today = dt.date.today()
         pump_three = Pump.objects.all().filter(pump_name='Pump Three').first()
-        pump_three_id = pump_three.id
-        try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_three_id).first()
-        except Log.DoesNotExist:
+        if pump_three:
+            pump_three_id = pump_three.id
+            try:
+                return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_three_id).first()
+            except Log.DoesNotExist:
+                return Http404
+        else:
             return Http404
 
     def get(self, request, id, format=None):
         today = dt.date.today()
         pump_three = Pump.objects.all().filter(pump_name='Pump Three').first()
-        pump_three_id = pump_three.id
-        today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_three_id).first()
-        # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_three_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-        yesterday = today - dt.timedelta(days=1)
-        yesterday_log_three = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_three_id).first()
-        fuel_info = Fuel.objects.all().filter(id=id).last()
-        if today_log_three and fuel_info:
-            price_per_litre = fuel_info.price_per_litre 
-            init = fuel_info.initial_litres_in_tank
-            today_log_three.fuel_name = today_log_three.fuel.fuel_type
-            today_log_three.save()
-            today_log_three.refresh_from_db()
-            today_log_three.pump_name = today_log_three.pump.pump_name
-            today_log_three.save()
-            today_log_three.refresh_from_db()
-            if yesterday_log_three:
-                eod_yesterday = yesterday_log_three.eod_reading_lts
-                today_log_three.eod_reading_yesterday = eod_yesterday
+        if pump_three:
+            pump_three_id = pump_three.id
+            today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_three_id).first()
+            # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_three_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+            yesterday = today - dt.timedelta(days=1)
+            yesterday_log_three = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_three_id).first()
+            fuel_info = Fuel.objects.all().filter(id=id).last()
+            if today_log_three and fuel_info:
+                price_per_litre = fuel_info.price_per_litre 
+                init = fuel_info.initial_litres_in_tank
+                today_log_three.fuel_name = today_log_three.fuel.fuel_type
                 today_log_three.save()
                 today_log_three.refresh_from_db()
-                today_log_three.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_three.pump_name = today_log_three.pump.pump_name
                 today_log_three.save()
                 today_log_three.refresh_from_db()
-                today_log_three.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
-                today_log_three.save()
-                today_log_three.refresh_from_db()
-            else:
-                today_log_three.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
-                today_log_three.save()
-                today_log_three.refresh_from_db()
-                today_log_three.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
-                today_log_three.save()
-                today_log_three.refresh_from_db()
-        else: 
+                if yesterday_log_three:
+                    eod_yesterday = yesterday_log_three.eod_reading_lts
+                    today_log_three.eod_reading_yesterday = eod_yesterday
+                    today_log_three.save()
+                    today_log_three.refresh_from_db()
+                    today_log_three.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                    today_log_three.save()
+                    today_log_three.refresh_from_db()
+                    today_log_three.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                    today_log_three.save()
+                    today_log_three.refresh_from_db()
+                else:
+                    today_log_three.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                    today_log_three.save()
+                    today_log_three.refresh_from_db()
+                    today_log_three.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                    today_log_three.save()
+                    today_log_three.refresh_from_db()
+            else: 
+                Http404
+            serializers = LogSerializer(today_log_three,many=False)
+            return Response(serializers.data)
+        else:
             Http404
-        serializers = LogSerializer(today_log_three,many=False)
-        return Response(serializers.data)
+            today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
+            serializers = LogSerializer(today_log_three,many=False)
+            return Response(serializers.data)
 
 class TodayFuelLogsFour(APIView):
     permission_classes=(AllowAny,)
     def get_today_fuel_logs_four(self, id):
         today = dt.date.today()
         pump_four = Pump.objects.all().filter(pump_name='Pump Three').first()
-        pump_four_id = pump_four.id
-        try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_four_id).first()
-        except Log.DoesNotExist:
+        if pump_four:
+            pump_four_id = pump_four.id
+            try:
+                return Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_four_id).first()
+            except Log.DoesNotExist:
+                return Http404
+        else:
             return Http404
 
     def get(self, request, id, format=None):
         today = dt.date.today()
         pump_four = Pump.objects.all().filter(pump_name='Pump Three').first()
-        pump_four_id = pump_four.id
-        today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_four_id).first()
-        # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_four_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-        yesterday = today - dt.timedelta(days=1)
-        yesterday_log_four = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_four_id).first()
-        fuel_info = Fuel.objects.all().filter(id=id).last()
-        if today_log_four and fuel_info:
-            price_per_litre = fuel_info.price_per_litre 
-            init = fuel_info.initial_litres_in_tank
-            today_log_four.fuel_name = today_log_four.fuel.fuel_type
-            today_log_four.save()
-            today_log_four.refresh_from_db()
-            today_log_four.pump_name = today_log_four.pump.pump_name
-            today_log_four.save()
-            today_log_four.refresh_from_db()
-            if yesterday_log_four:
-                eod_yesterday = yesterday_log_four.eod_reading_lts
-                today_log_four.eod_reading_yesterday = eod_yesterday
+        if pump_four:
+            pump_four_id = pump_four.id
+            today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=id).filter(pump_id=pump_four_id).first()
+            # fuel_received = FuelReceived.objects.all().filter(fuel_id=id).filter(pump_id=pump_four_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
+            yesterday = today - dt.timedelta(days=1)
+            yesterday_log_four = Log.objects.all().filter(fuel_id=id).filter(date=yesterday).filter(pump_id=pump_four_id).first()
+            fuel_info = Fuel.objects.all().filter(id=id).last()
+            if today_log_four and fuel_info:
+                price_per_litre = fuel_info.price_per_litre 
+                init = fuel_info.initial_litres_in_tank
+                today_log_four.fuel_name = today_log_four.fuel.fuel_type
                 today_log_four.save()
                 today_log_four.refresh_from_db()
-                today_log_four.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                today_log_four.pump_name = today_log_four.pump.pump_name
                 today_log_four.save()
                 today_log_four.refresh_from_db()
-                today_log_four.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
-                today_log_four.save()
-                today_log_four.refresh_from_db()
-            else:
-                today_log_four.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
-                today_log_four.save()
-                today_log_four.refresh_from_db()
-                today_log_four.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
-                today_log_four.save()
-                today_log_four.refresh_from_db()
-        else: 
-            Http404
-        serializers = LogSerializer(today_log_four,many=False)
-        return Response(serializers.data)
+                if yesterday_log_four:
+                    eod_yesterday = yesterday_log_four.eod_reading_lts
+                    today_log_four.eod_reading_yesterday = eod_yesterday
+                    today_log_four.save()
+                    today_log_four.refresh_from_db()
+                    today_log_four.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                    today_log_four.save()
+                    today_log_four.refresh_from_db()
+                    today_log_four.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                    today_log_four.save()
+                    today_log_four.refresh_from_db()
+                else:
+                    today_log_four.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
+                    today_log_four.save()
+                    today_log_four.refresh_from_db()
+                    today_log_four.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
+                    today_log_four.save()
+                    today_log_four.refresh_from_db()
+            else: 
+                Http404
+            serializers = LogSerializer(today_log_four,many=False)
+            return Response(serializers.data)
+        else:
+            today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=id).first()
+            serializers = LogSerializer(today_log_four,many=False)
+            return Response(serializers.data)
 
 class AllMpesaLogs(APIView):
     permission_classes=(AllowAny,)
@@ -1185,6 +1212,13 @@ class AllMpesaLogs(APIView):
         serializers = LogMpesaSerializer(all_mpesa_logs,many=True)
         return Response(serializers.data)
 
+    def post(self, request, format=None):
+        serializers = LogMpesaSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class AllCreditCardLogs(APIView):
     permission_classes=(AllowAny,)
     def get_all_credit_card_logs(self):
@@ -1198,50 +1232,6 @@ class AllCreditCardLogs(APIView):
         serializers = LogMpesaSerializer(all_credit_card_logs,many=True)
         return Response(serializers.data)
 
-class TodayMpesaLogs(APIView):
-    permission_classes=(AllowAny,)
-    def get_today_mpesa_logs(self):
-        today = dt.date.today()
-        try:
-            return LogMpesa.objects.all().filter(date=today)
-        except LogMpesa.DoesNotExist:
-            return Http404
-
-    def get(self, request, format=None):
-        today = dt.date.today()
-        first_mpesa_log = LogMpesa.objects.all().filter(date=today).first()
-        today_mpesa_logs = LogMpesa.objects.all().filter(date=today)
-        if first_mpesa_log:
-            today_mpesa_logs = LogMpesa.objects.all().filter(date=today)
-            serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
-        else:
-            Http404
-            first_mpesa_log = LogMpesa.objects.all().filter(date=today).first()
-            serializers = LogMpesaSerializer(first_mpesa_log,many=False)
-        return Response(serializers.data)
-
-    def post(self, request, format=None):
-        serializers = LogMpesaSerializer(data=request.data)
-        if serializers.is_valid():
-            serializers.save()
-            return Response(serializers.data, status=status.HTTP_201_CREATED)
-        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class TodayCreditCardLogs(APIView):
-    permission_classes=(AllowAny,)
-    def get_today_credit_card_logs(self):
-        today = dt.date.today()
-        try:
-            return LogCreditCard.objects.all().filter(date=today)
-        except LogCreditCard.DoesNotExist:
-            return Http404
-
-    def get(self, request, format=None):
-        today = dt.date.today()
-        today_credit_card_logs = LogCreditCard.objects.all().filter(date=today)
-        serializers = LogCreditCardSerializer(today_credit_card_logs,many=True)
-        return Response(serializers.data)
-
     def post(self, request, format=None):
         serializers = LogCreditCardSerializer(data=request.data)
         if serializers.is_valid():
@@ -1249,6 +1239,50 @@ class TodayCreditCardLogs(APIView):
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class TodayMpesaLogs(APIView):
+    permission_classes=(AllowAny,)
+    def get_today_mpesa_logs(self,id):
+        today = dt.date.today()
+        try:
+            return LogMpesa.objects.all().filter(date=today).filter(fuel=id)
+        except LogMpesa.DoesNotExist:
+            return Http404
+
+    def get(self, request, id, format=None):
+        today = dt.date.today()
+        first_mpesa_log = LogMpesa.objects.all().filter(date=today).filter(fuel=id).first()
+        today_mpesa_logs = LogMpesa.objects.all().filter(date=today).filter(fuel=id)
+        if first_mpesa_log:
+            today_mpesa_logs = LogMpesa.objects.all().filter(date=today).filter(fuel=id)
+            serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
+            return Response(serializers.data)
+        else:
+            Http404
+            first_mpesa_log = LogMpesa.objects.all().filter(date=today).filter(fuel=id).first()
+            serializers = LogMpesaSerializer(first_mpesa_log,many=False)
+        return Response(serializers.data)
+
+class TodayCreditCardLogs(APIView):
+    permission_classes=(AllowAny,)
+    def get_today_credit_card_logs(self,id):
+        today = dt.date.today()
+        try:
+            return LogCreditCard.objects.all().filter(date=today).filter(fuel=id)
+        except LogCreditCard.DoesNotExist:
+            return Http404
+
+    def get(self, request, id, format=None):
+        today = dt.date.today()
+        first_credit_card_log = LogCreditCard.objects.all().filter(date=today).filter(fuel=id).first()
+        today_credit_card_logs = LogCreditCard.objects.all().filter(date=today).filter(fuel=id)
+        if first_credit_card_log:
+            today_credit_card_logs = LogCreditCard.objects.all().filter(date=today).filter(fuel=id)
+            serializers = LogCreditCardSerializer(today_credit_card_logs,many=True)
+        else:
+            Http404
+            first_credit_card_log = LogCreditCard.objects.all().filter(date=today).filter(fuel=id).first()
+            serializers = LogCreditCardSerializer(first_credit_card_log,many=False)
+        return Response(serializers.data)
 
 class UserMpesaLogs(APIView):
     permission_classes=(AllowAny,)
@@ -1297,7 +1331,6 @@ class AllFuelReceivedToday(APIView):
             serializers.save()
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class PetrolReceivedTodayInfo(APIView):
     permission_classes=(AllowAny,)
@@ -1391,10 +1424,6 @@ class TotalPetrolReceivedToday(APIView):
         else:
             return Response()
         
-
-
-
-
 class DieselReceivedTodayInfo(APIView):
     permission_classes=(AllowAny,)
     def get_fuel_received_info(self,id):
@@ -1482,9 +1511,6 @@ class TotalDieselReceivedToday(APIView):
         else:
             return Response()
         
-
-
-
 class GasReceivedTodayInfo(APIView):
     permission_classes=(AllowAny,)
     def get_fuel_received_info(self,id):
@@ -1527,7 +1553,6 @@ class GasReceivedTodayInfo(APIView):
         serializers = FuelReceivedSerializer(fuel_received_info,many=True)
         return Response(serializers.data)
         
-
 class TotalGasReceivedToday(APIView):
     permission_classes=(AllowAny,)
     def get_fuel_received_info(self,id):
@@ -1573,7 +1598,6 @@ class TotalGasReceivedToday(APIView):
         else:
             return Response()
         
-
 class LogDetails(APIView):
     permission_classes=(AllowAny,)
     def get_log_details(self,id):
@@ -1587,6 +1611,10 @@ class LogDetails(APIView):
         if log_details:
             log_details.fuel_name = log_details.fuel.fuel_type
             log_details.save()
+            log_details.refresh_from_db()
+            log_date = log_details.date
+            # log_details.formatted_date = log_date.strftime("%l/%d/%F/%Y")
+            # log_details.save()
             log_details.refresh_from_db()
             log_details.price_per_litre = log_details.fuel.price_per_litre
             log_details.save()
@@ -1615,6 +1643,10 @@ class MpesaLogDetails(APIView):
         mpesa_details = LogMpesa.objects.all().filter(id=id).last()
         if mpesa_details:
             mpesa_date = mpesa_details.date
+            mpesa_details.fuel_name = mpesa_details.fuel.fuel_type 
+            mpesa_details.save()
+            mpesa_details.refresh_from_db()
+
         mpesa_today = LogMpesa.objects.all().filter(date=mpesa_date)
         if mpesa_details and mpesa_today:
             mpesa_details.daily_total = LogMpesa.objects.all().filter(date=mpesa_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
@@ -1652,6 +1684,9 @@ class CreditCardLogDetails(APIView):
         credit_card_details = LogCreditCard.objects.all().filter(id=id).last()
         if credit_card_details:
             credit_card_date = credit_card_details.date
+            credit_card_details.fuel_name = credit_card_details.fuel.fuel_type 
+            credit_card_details.save()
+            credit_card_details.refresh_from_db()
         credit_card_today = LogCreditCard.objects.all().filter(date=credit_card_date)
         if credit_card_details and credit_card_today:
             credit_card_details.daily_total = LogCreditCard.objects.all().filter(date=credit_card_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
@@ -1679,16 +1714,71 @@ class CreditCardLogDetails(APIView):
 
 class PastLogs(APIView):
     permission_classes=(AllowAny,)
-    def get_past_logs(self,past_date):
-        try:
-            date = dt.datetime.strptime(past_date, '%Y-%m-%d').date()
-        except ValueError:
-            raise Http404()
-            assert False 
     
-    def get(self,past_date):
-        past_logs = Log.objects.all().filter(date=past_date)
+    def get(self,request,past_date):
+        try:
+        # convert data from the string url
+            date = dt.datetime.strptime(past_date, '%Y-%m-%d').date()
+
+        except ValueError:
+            # raise 404 when value error is thrown
+            raise Http404()
+            assert False
+
+        if date == dt.date.today():
+            today = dt.date.today()
+            past_logs = Log.objects.filter(date=today)
+            serializers = LogSerializer(past_logs,many=True)
+            return Response(serializers.data)
+
+        past_logs = Log.objects.filter(date=date)
         serializers = LogSerializer(past_logs,many=True)
+        return Response(serializers.data)
+
+class PastMpesaLogs(APIView):
+    permission_classes=(AllowAny,)
+    
+    def get(self,request,past_date):
+        try:
+        # convert data from the string url
+            date = dt.datetime.strptime(past_date, '%Y-%m-%d').date()
+
+        except ValueError:
+            # raise 404 when value error is thrown
+            raise Http404()
+            assert False
+
+        if date == dt.date.today():
+            today = dt.date.today()
+            past_mpesa_logs = LogMpesa.objects.filter(date=today)
+            serializers = LogMpesaSerializer(past_mpesa_logs,many=True)
+            return Response(serializers.data)
+
+        past_mpesa_logs = LogMpesa.objects.filter(date=date)
+        serializers = LogMpesaSerializer(past_mpesa_logs,many=True)
+        return Response(serializers.data)
+
+class PastCreditCardLogs(APIView):
+    permission_classes=(AllowAny,)
+    
+    def get(self,request,past_date):
+        try:
+        # convert data from the string url
+            date = dt.datetime.strptime(past_date, '%Y-%m-%d').date()
+
+        except ValueError:
+            # raise 404 when value error is thrown
+            raise Http404()
+            assert False
+
+        if date == dt.date.today():
+            today = dt.date.today()
+            past_credit_card_logs = LogCreditCard.objects.filter(date=today)
+            serializers = LogCreditCardSerializer(past_credit_card_logs,many=True)
+            return Response(serializers.data)
+
+        past_credit_card_logs = LogCreditCard.objects.filter(date=date)
+        serializers = LogCreditCardSerializer(past_credit_card_logs,many=True)
         return Response(serializers.data)
 
 class EmailReport(APIView):

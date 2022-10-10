@@ -267,6 +267,7 @@ class Pump(models.Model):
     
 class Log(models.Model):
     date = models.DateField(default=timezone.now)
+    formatted_date = models.CharField(max_length=200,null=True,blank=True)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     fuel_name = models.CharField(max_length=60,null=True,blank=True)
     price_per_litre = models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True)
@@ -307,6 +308,7 @@ class Log(models.Model):
 class LogMpesa(models.Model):
     date = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
+    fuel_name = models.CharField(max_length=60,null=True,blank=True)
     transaction_number = models.CharField(max_length=30,default=0)
     customer_name = models.CharField(max_length=120,default='')
     customer_phone_number = models.PositiveBigIntegerField(default=0)
@@ -350,6 +352,7 @@ class LogMpesa(models.Model):
 
 class LogCreditCard(models.Model):
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
+    fuel_name = models.CharField(max_length=60,null=True,blank=True)
     amount = models.BigIntegerField(default=0)
     card_name = models.CharField(max_length=120,default='')
     card_number = models.IntegerField(validators=[MinValueValidator(9999999999999999),MaxValueValidator(9999999999999999)])
