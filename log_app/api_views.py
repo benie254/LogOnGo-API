@@ -1252,6 +1252,7 @@ class TodayMpesaLogs(APIView):
         today = dt.date.today()
         first_mpesa_log = LogMpesa.objects.all().filter(date=today).filter(fuel=id).first()
         today_mpesa_logs = LogMpesa.objects.all().filter(date=today).filter(fuel=id)
+        
         if first_mpesa_log:
             today_mpesa_logs = LogMpesa.objects.all().filter(date=today).filter(fuel=id)
             serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
