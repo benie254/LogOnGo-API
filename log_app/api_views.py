@@ -293,24 +293,25 @@ class PetrolSummaryToday(APIView):
 
         if pump_one:
             pump_one_id = pump_one.id
+            today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_one_id).first()
         else:
             Http404
         if pump_two:
             pump_two_id = pump_two.id
+            today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_two_id).first()
         else:
             Http404
         if pump_three:
             pump_three_id = pump_three.id
+            today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_three_id).first()
         else:
             Http404
         if pump_four:
             pump_four_id = pump_four.id
+            today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_four_id).first()
         else:
             Http404
-        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_one_id).first()
-        today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_two_id).first()
-        today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_three_id).first()
-        today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=petrol_id).filter(pump_id=pump_four_id).first()
+        
         petrol_received = FuelReceived.objects.all().filter(fuel_id=petrol_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         if today_fuel_log and today_log_two and today_log_three and today_log_four and petrol_info:
             petrol_id = petrol_info.id
@@ -527,24 +528,25 @@ class DieselSummaryToday(APIView):
 
         if pump_one:
             pump_one_id = pump_one.id
+            today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_one_id).first()
         else:
             Http404
         if pump_two:
             pump_two_id = pump_two.id
+            today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_two_id).first()
         else:
             Http404
         if pump_three:
             pump_three_id = pump_three.id
+            today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_three_id).first()
         else:
             Http404
         if pump_four:
             pump_four_id = pump_four.id
+            today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_four_id).first()
         else:
             Http404
-        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_one_id).first()
-        today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_two_id).first()
-        today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_three_id).first()
-        today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=diesel_id).filter(pump_id=pump_four_id).first()
+        
         diesel_received = FuelReceived.objects.all().filter(fuel_id=diesel_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         if today_fuel_log and today_log_two and today_log_three and today_log_four and diesel_info:
             diesel_id = diesel_info.id
@@ -760,24 +762,26 @@ class GasSummaryToday(APIView):
 
         if pump_one:
             pump_one_id = pump_one.id
+            today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_one_id).first()
         else:
             Http404
         if pump_two:
             pump_two_id = pump_two.id
+            today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_two_id).first()
         else:
             Http404
         if pump_three:
             pump_three_id = pump_three.id
+            today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_three_id).first()
         else:
             Http404
         if pump_four:
             pump_four_id = pump_four.id
+            today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_four_id).first()
         else:
             Http404
-        today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_one_id).first()
-        today_log_two = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_two_id).first()
-        today_log_three = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_three_id).first()
-        today_log_four = Log.objects.all().filter(date=today).filter(fuel_id=gas_id).filter(pump_id=pump_four_id).first()
+        
+        
         gas_received = FuelReceived.objects.all().filter(fuel_id=gas_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
         if today_fuel_log and today_log_two and today_log_three and today_log_four and gas_info:
             gas_id = gas_info.id

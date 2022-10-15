@@ -307,6 +307,7 @@ class Log(models.Model):
 
 class LogMpesa(models.Model):
     date = models.DateField(default=timezone.now)
+    formatted_date = models.CharField(max_length=200,null=True,blank=True)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     fuel_name = models.CharField(max_length=60,null=True,blank=True)
     transaction_number = models.CharField(max_length=30,default=0)
@@ -355,8 +356,9 @@ class LogCreditCard(models.Model):
     fuel_name = models.CharField(max_length=60,null=True,blank=True)
     amount = models.BigIntegerField(default=0)
     card_name = models.CharField(max_length=120,default='')
-    card_number = models.IntegerField(validators=[MinValueValidator(9999999999999999),MaxValueValidator(9999999999999999)])
+    card_number = models.BigIntegerField(validators=[MinValueValidator(1000000000000000),MaxValueValidator(9999999999999999)])
     date = models.DateField(default=timezone.now)
+    formatted_date = models.CharField(max_length=200,null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
     daily_total = models.BigIntegerField(null=True,blank=True)
     cumulative_amount = models.IntegerField(null=True,blank=True)
