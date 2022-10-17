@@ -30,17 +30,17 @@ class FuelSerializer(serializers.ModelSerializer):
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log 
-        fields = ('id','fuel','fuel_name','price_per_litre','pump','pump_name','date','formatted_date','eod_reading_lts','eod_reading_yesterday','total_litres_sold','amount_earned_today','first_logged','last_edited','user_id','logged_by',)
+        fields = ('id','fuel','fuel_name','price_per_litre','pump','pump_name','date','formatted_date','eod_reading_lts','eod_reading_yesterday','total_litres_sold','amount_earned_today','first_logged','last_edited','edited_by','user_id','logged_by',)
 
 class LogMpesaSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogMpesa 
-        fields = ('id','fuel','fuel_name','date','transaction_number','user','logged_by','customer_name','customer_phone_number','amount','amount_transferred_to_bank','daily_total','cumulative_amount','first_logged','last_edited')
+        fields = ('id','fuel','fuel_name','date','transaction_number','user','logged_by','customer_name','customer_phone_number','amount','amount_transferred_to_bank','daily_total','cumulative_amount','first_logged','last_edited','edited_by')
 
 class LogCreditCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogCreditCard
-        fields = ('id','fuel','fuel_name','date','card_name','card_number','amount','daily_total','cumulative_amount','site_name','user','logged_by','first_logged','last_edited')
+        fields = ('id','fuel','fuel_name','date','card_name','card_number','amount','daily_total','cumulative_amount','site_name','user','logged_by','first_logged','last_edited','edited_by')
 
 class FuelReceivedSerializer(serializers.ModelSerializer):
     class Meta:

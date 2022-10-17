@@ -279,6 +279,7 @@ class Log(models.Model):
     amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True)
     first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
+    edited_by = models.CharField(max_length=120,null=True,blank=True)
     user_id = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
     site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
@@ -319,6 +320,7 @@ class LogMpesa(models.Model):
     cumulative_amount = models.IntegerField(null=True,blank=True)
     first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
+    edited_by = models.CharField(max_length=120,null=True,blank=True)
     user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     logged_by = models.CharField(max_length=120,blank=True,null=True)
     site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
@@ -364,6 +366,7 @@ class LogCreditCard(models.Model):
     cumulative_amount = models.IntegerField(null=True,blank=True)
     first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
+    edited_by = models.CharField(max_length=120,null=True,blank=True)
     user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
 
