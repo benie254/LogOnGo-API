@@ -21,22 +21,54 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from log_app.auth_serializer import UserLoginSerializer,UserRegistrationSerializer
 
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
-from django.contrib.sites.shortcuts import get_current_site
-from django.utils.encoding import force_str
-from .tokens import account_activation_token
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from rest_framework import serializers
 from rest_framework_jwt.settings import api_settings
 from log_app.models import MyUser as User
+from log_app import utils
 
-JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
+JWT_PAYLOAD_HANDLER = utils.jwt_otp_payload
 JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 
+from rest_framework import views, permissions
+from rest_framework.response import Response
+from rest_framework import status
+from django_otp import devices_for_user
+from django_otp.plugins.otp_totp.models import TOTPDevice
+def get_user_totp_device(self, user, confirmed=None):
+    devices = devices_for_user(user, confirmed=confirmed)
+    for device in devices:
+        if isinstance(device, TOTPDevice):
+            return device
+class TOTPCreateView(views.APIView):
+    """
+    Use this endpoint to set up a new TOTP device
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request, format=None):
+        user = request.user
+        device = get_user_totp_device(self, user)
+        if not device:
+            device = user.totpdevice_set.create(confirmed=False)
+        url = device.config_url
+        return Response(url, status=status.HTTP_201_CREATED)
+class TOTPVerifyView(APIView):
+    """
+    Api to verify/enable a TOTP device
+    """
+    permission_classes = (AllowAny, )
+    def post(self, request, token, format=None):
+        user = request.user
+        device = get_user_totp_device(self, user)
+        if not device == None and device.verify_token(token):
+            if not device.confirmed:
+                device.confirmed = True
+                device.save()
+            token = utils.get_custom_jwt(user, device)
+            return Response({'token': token},  status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 # Create your views here.'
 class UserProfile(APIView):
@@ -147,14 +179,10 @@ class RegisterView(APIView):
         user.profile.email = serializer.validated_data['email']
         user.profile.petrol_station = serializer.validated_data['petrol_station']
         user.site.petrol_station = serializer.validated_data['petrol_station']
-        user.is_active = False
+            # user.is_active = False
         user.save()
-        current_site = get_current_site(request)
-        domain = current_site.domain
-        uid = urlsafe_base64_encode(force_bytes(user.pk)),
-        token = account_activation_token.make_token(user),
         sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-        msg = "Nice to have you on board LogOnGo. Please click the following link to confirm and complete your registration:</p> <p>http://" + str(domain) + 'new-user/activate/' +  {{uid}} + "/" + {{token}} + "/</p> <br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+        msg = "Nice to have you on board LogOnGo. Let's get to work!</p> <br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
         message = Mail(
             from_email = Email("davinci.monalissa@gmail.com"),
             to_emails = receiver,
@@ -244,14 +272,14 @@ class LogoutView(APIView):
         }
         return response
 
-# class UsrProf(APIView):
-#     def get_user_profiles(self):
-#         try:
-#             return Profile.objects.all()
-#         except Profile.DoesNotExist:
-#             return Http404
+class UsrProf(APIView):
+    def get_user_profiles(self):
+        try:
+            return Profile.objects.all()
+        except Profile.DoesNotExist:
+            return Http404
 
-#     def get(self, request, format=None):
-#         usr_profiles = Profile.objects.all()
-#         serializers = UsrProf()
-#         return Response(serializers.data)
+    def get(self, request, format=None):
+        usr_profiles = Profile.objects.all()
+        serializers = UsrProf()
+        return Response(serializers.data)
