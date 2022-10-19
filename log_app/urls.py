@@ -1,6 +1,7 @@
 from django.conf.urls import include 
 from django.urls import path,re_path as url 
 from log_app import views, api_views, auth_views 
+from django.contrib.auth import views as dj_auth_views 
 
 
 urlpatterns = [
@@ -56,4 +57,10 @@ urlpatterns = [
     url(r'^email-credit-card-report/$',api_views.EmailCreditCardReport.as_view(),name='email_credit_card_report'),
     url(r'^incident-report/$',api_views.IncidentReport.as_view(),name='incident_report'),
     url(r'^contact-admin/$',api_views.ContactAdmin.as_view(),name='contact_admin'),
+
+    path('change-password/',dj_auth_views.PasswordChangeView.as_view(template_name='auth/change-password.html',success_url='/user/profile/'),name='change_password'),
+    path('password-reset/',dj_auth_views.PasswordResetView.as_view(template_name='auth/password_reset.html',subject_template_name='auth/email/password_reset_subject.txt',email_template_name='auth/email/password_reset_email.html',),name='password_reset'),
+    path('password-reset/done/',dj_auth_views.PasswordResetDoneView.as_view(template_name='auth/password_reset_mail_sent.html'),name='password_reset_done'),
+    path('password-reset-confirm/<uidb64>/<token>/',dj_auth_views.PasswordResetConfirmView.as_view(template_name='auth/password_reset_confirmation.html'),name='password_reset_confirm'),
+    path('password-reset-complete/',dj_auth_views.PasswordResetCompleteView.as_view(template_name='auth/password_reset_completed.html'),name='password_reset_complete'),
 ]

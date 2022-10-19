@@ -21,6 +21,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from log_app.auth_serializer import UserLoginSerializer,UserRegistrationSerializer
 
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.encoding import force_str
+from .tokens import account_activation_token
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -141,10 +147,14 @@ class RegisterView(APIView):
         user.profile.email = serializer.validated_data['email']
         user.profile.petrol_station = serializer.validated_data['petrol_station']
         user.site.petrol_station = serializer.validated_data['petrol_station']
-            # user.is_active = False
+        user.is_active = False
         user.save()
+        current_site = get_current_site(request)
+        domain = current_site.domain
+        uid = urlsafe_base64_encode(force_bytes(user.pk)),
+        token = account_activation_token.make_token(user),
         sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-        msg = "Nice to have you on board LogOnGo. Let's get to work!</p> <br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+        msg = "Nice to have you on board LogOnGo. Please click the following link to confirm and complete your registration:</p> <p>http://" + str(domain) + 'new-user/activate/' +  {{uid}} + "/" + {{token}} + "/</p> <br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
         message = Mail(
             from_email = Email("davinci.monalissa@gmail.com"),
             to_emails = receiver,

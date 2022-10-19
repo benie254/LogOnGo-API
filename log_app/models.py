@@ -146,16 +146,32 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
         ),
         validators=[username_validator],
         error_messages={
-            "unique": _("A user with that username already exists."),
+            "unique": _("A user with this username already exists."),
         }
     )
     first_name = models.CharField(_("first name"), max_length=150)
     last_name = models.CharField(_("last name"), max_length=150)
     CHOICES = (('Station-Kisii','Station-Kisii'),('Station-Nairobi','Station-Nairobi'))
-    petrol_station = models.CharField(_("petrol station"), max_length=150,choices=CHOICES)
-    email = models.EmailField(_("email address"),unique=True)
+    petrol_station = models.CharField(
+        _("petrol station"), max_length=150,choices=CHOICES,
+        error_messages={
+            "invalid_choice": _("Value %r is an invalid choice."),
+        }
+        )
+    email = models.EmailField(
+        _("email address"),unique=True,
+        error_messages={
+            "unique": _("A user with this email already exists."),
+        }
+    )
     IDS = ((12345,12345),(67891,67891),(102030,102030),(405060,405060),(708090,708090),(112233,112233),(445566,445566),(778899,778899),(101010,101010),(202020,202020),(303030,303030),(404040,404040),(505050,505050))
-    employee_id = models.PositiveIntegerField(choices=IDS,unique=True)
+    employee_id = models.PositiveIntegerField(
+        choices=IDS,unique=True,
+        error_messages={
+            "unique": _("An employee with this ID already exists."),
+            "invalid_choice": _("No user with this ID exists."),
+        }
+        )
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
