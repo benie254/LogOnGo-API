@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_otp',
     'django_otp.plugins.otp_totp',
+    'django_rest_passwordreset',
 ]
 
 REST_FRAMEWORK = {
