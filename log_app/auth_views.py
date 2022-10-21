@@ -1,10 +1,12 @@
 from rest_framework.views import APIView
+from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
+from log_app import auth_serializer
 from log_app.email import send_welcome_email
 from log_app.renderers import UserJSONRenderer
 from log_app.models import MyUser, Site, Profile
-from log_app.auth_serializer import PetrolStationSerializer, UserProfileSerializer, UserSerializer
+from log_app.auth_serializer import ChangePasswordSerializer, PetrolStationSerializer, UserProfileSerializer, UserSerializer
 import jwt, datetime
 from rest_framework.generics import CreateAPIView
 from rest_framework import permissions
@@ -18,9 +20,10 @@ from decouple import config
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny,IsAuthenticated
 from log_app.auth_serializer import UserLoginSerializer,UserRegistrationSerializer
 
+from rest_framework import generics
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -28,47 +31,10 @@ from rest_framework import serializers
 from rest_framework_jwt.settings import api_settings
 from log_app.models import MyUser as User
 from log_app import utils
+from knox.models import AuthToken
 
-JWT_PAYLOAD_HANDLER = utils.jwt_otp_payload
+JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
 JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
-
-from rest_framework import views, permissions
-from rest_framework.response import Response
-from rest_framework import status
-from django_otp import devices_for_user
-from django_otp.plugins.otp_totp.models import TOTPDevice
-def get_user_totp_device(self, user, confirmed=None):
-    devices = devices_for_user(user, confirmed=confirmed)
-    for device in devices:
-        if isinstance(device, TOTPDevice):
-            return device
-class TOTPCreateView(views.APIView):
-    """
-    Use this endpoint to set up a new TOTP device
-    """
-    permission_classes = [permissions.IsAuthenticated]
-    def get(self, request, format=None):
-        user = request.user
-        device = get_user_totp_device(self, user)
-        if not device:
-            device = user.totpdevice_set.create(confirmed=False)
-        url = device.config_url
-        return Response(url, status=status.HTTP_201_CREATED)
-class TOTPVerifyView(APIView):
-    """
-    Api to verify/enable a TOTP device
-    """
-    permission_classes = (AllowAny, )
-    def post(self, request, token, format=None):
-        user = request.user
-        device = get_user_totp_device(self, user)
-        if not device == None and device.verify_token(token):
-            if not device.confirmed:
-                device.confirmed = True
-                device.save()
-            token = utils.get_custom_jwt(user, device)
-            return Response({'token': token},  status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 # Create your views here.'
 class UserProfile(APIView):
@@ -198,10 +164,12 @@ class RegisterView(APIView):
         except Exception as e:
             print(e)
         status_code = status.HTTP_201_CREATED
+        token = AuthToken.objects.create(user)
         response = {
             'success' : 'True',
             'status code' : status_code,
             'message': 'User registered  successfully',
+            "token": token[1]
             }
         return Response(serializer.data)
 
@@ -223,18 +191,18 @@ class LoginView(APIView):
             raise AuthenticationFailed('Incorrect password!')
 
         try:
-            payload = JWT_PAYLOAD_HANDLER(user)
-            jwt_token = JWT_ENCODE_HANDLER(payload)
+            token = AuthToken.objects.create(user)[1]
             update_last_login(None, user)
+
         except User.DoesNotExist:
             raise serializers.ValidationError(
                 'User with given email and password does not exists'
             )
         response = Response()
 
-        response.set_cookie(key='jwt', value=jwt_token, httponly=True)
+        response.set_cookie(key='knox', value=token, httponly=True)
         response.data = {
-            'token': jwt_token,
+            'token': token,
             'email':user.email,
             'username':user.username,
             'first_name':user.first_name,
@@ -266,7 +234,7 @@ class UserView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         response = Response()
-        response.delete_cookie('jwt')
+        response.delete_cookie('knox')
         response.data = {
             'message': 'success'
         }
@@ -283,3 +251,10 @@ class UsrProf(APIView):
         usr_profiles = Profile.objects.all()
         serializers = UsrProf()
         return Response(serializers.data)
+
+
+class ChangePasswordView(generics.UpdateAPIView):
+
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ChangePasswordSerializer

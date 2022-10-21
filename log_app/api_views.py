@@ -1316,7 +1316,6 @@ class UserCreditCardLogs(APIView):
         return Response(serializers.data)
 
 class AllFuelReceivedToday(APIView):
-    permission_classes=(AllowAny,)
     def get_fuel_received(self):
         today = dt.date.today()
         try:

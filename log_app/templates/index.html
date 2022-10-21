@@ -26,7 +26,7 @@
 
 <body>
     <h1>Pagination</h1>
-    {%for p in page_obj%}eod:{{p.eod_reading_lts}}{%endfor%}
+{%for p in page_obj%}eod:{{p.eod_reading_lts}}{%endfor%}
     <div class="pagination">
         <span class="step-links">
             {% if page_obj.has_previous %}

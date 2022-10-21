@@ -1,21 +1,21 @@
 from django.conf.urls import include 
 from django.urls import path,re_path as url 
 from log_app import views, api_views, auth_views 
-
+from knox import views as knox_views
 
 urlpatterns = [
-    url(r'^totp/create/$', auth_views.TOTPCreateView.as_view(), name='totp-create'),
-    url(r'^totp/login/(?P<token>[0-9]{6})/$', auth_views.TOTPVerifyView.as_view(), name='totp-login'),
+    path('change-password/<int:pk>',auth_views.ChangePasswordView.as_view(),name='change-password'),
     url(r'^announcements/$',api_views.Announcements.as_view(),name="announcements"),
     url(r'^all-announcements/$',api_views.AllAnnouncements.as_view(),name="all_announcements"),
     url(r'^stations/$',auth_views.AllUserStations.as_view(),name="stations"),
     url(r'^profiles/$',auth_views.AllProfiles.as_view(),name="profiles"),
     url(r'^user-profile/$',auth_views.UserProfile.as_view(),name="user_profile"),
     url(r'^all-users/$',auth_views.UserProfiles.as_view(),name="all_users"),
-    url(r'^register/$', auth_views.RegisterView.as_view(),name="register"),
-    url(r'^login/$', auth_views.LoginView.as_view(),name="login"),
+    url(r'^auth/', include('knox.urls')),
+    url(r'^auth/register$', auth_views.RegisterView.as_view(),name="register"),
+    url(r'^auth/login$', auth_views.LoginView.as_view(),name="login"),
     url(r'^user/$', auth_views.UserView.as_view(),name="user"),
-    url(r'^logout/$', auth_views.LogoutView.as_view(),name="logout"),
+    url(r'^auth/logout/$', knox_views.LogoutView.as_view(),name="knox-logout"),
     url(r'^our-fuels/$', api_views.RegisteredFuels.as_view(),name='our_fuels'),
     url(r'^diesel-info/$', api_views.DieselInfo.as_view(),name='diesel_info'),
     url(r'^gas-info/$', api_views.GasInfo.as_view(),name='gas_info'),
