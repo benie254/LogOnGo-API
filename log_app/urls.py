@@ -5,6 +5,7 @@ from knox import views as knox_views
 
 urlpatterns = [
     path('change-password/<int:pk>',auth_views.ChangePasswordView.as_view(),name='change-password'),
+    path('password_reset/', include('django_rest_passwordreset.urls',namespace='password_reset')),
     url(r'^announcements/$',api_views.Announcements.as_view(),name="announcements"),
     url(r'^all-announcements/$',api_views.AllAnnouncements.as_view(),name="all_announcements"),
     url(r'^stations/$',auth_views.AllUserStations.as_view(),name="stations"),
