@@ -32,6 +32,8 @@ from rest_framework_jwt.settings import api_settings
 from log_app.models import MyUser as User
 from log_app import utils
 from knox.models import AuthToken
+from django.urls import reverse
+from django_rest_passwordreset.signals import reset_password_token_created
 
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
 JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
@@ -258,3 +260,34 @@ class ChangePasswordView(generics.UpdateAPIView):
     queryset = User.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = ChangePasswordSerializer
+
+class ResetPassword(APIView):
+    def post(self, request, reset_password_token, *args, **kwargs):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username=serializer.validated_data['username']
+        receiver=serializer.validated_data['email']
+        pass_reset = "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
+        sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+        msg = "<p>We have received your request to reset your LogOnGo account password.</p><p>If you made this request, please click the following link to proceed with your password reset:</p><a>" + pass_reset + "</a>"
+        message = Mail(
+            from_email = Email("davinci.monalissa@gmail.com"),
+            to_emails = receiver,
+            subject = "Password Reset Request",
+            html_content='<p>Hello, ' + str(username) + ', <br><br>' + msg
+        )
+        try:
+            sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+            response = sendgrid_client.send(message)
+            print(response.status_code)
+            print(response.body)
+            print(response.headers)
+        except Exception as e:
+            print(e)
+        status_code = status.HTTP_201_CREATED
+        response = {
+            'success' : 'True',
+            'status code' : status_code,
+            'message': 'Password reset request sent successfully!',
+            }
+        return Response(serializer.data)
