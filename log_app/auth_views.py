@@ -340,7 +340,8 @@ class PasswordResetRequest(APIView):
 
 # class PasswordReset(APIView):
 #     permission_classes = (AllowAny,)
-    
+
+
 @api_view(('GET',))
 @renderer_classes((JSONRenderer,))
 @permission_classes([AllowAny,])
@@ -363,7 +364,7 @@ def activate(request, uidb64, token):
                 'success':successMsg,
             }
             # return response 
-            return redirect('reset-password-confirmed',uid)
+            return redirect('http://localhost:4200//confirmed/reset-password/' + uid)
         else:
             Http404
             print("failure")
