@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from log_app.models import MyUser, Site, Profile, Site
+from log_app.models import MyUser, Password, Site, Profile, Site
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -7,7 +7,11 @@ from rest_framework import serializers
 from rest_framework_jwt.settings import api_settings
 from log_app.models import MyUser as User
 from django.contrib.auth.password_validation import validate_password
-
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
 JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 
@@ -112,4 +116,27 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         instance.set_password(validated_data['password'])
         instance.save()
 
+        return instance
+
+class PasswordResetRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Password
+        fields = ('username','email')
+
+class PasswordResetSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ('password', 'password2')
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
+        return attrs
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data['password'])
+        instance.save()
         return instance

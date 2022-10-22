@@ -1,0 +1,3 @@
+{% block reset_link %}
+http://{{ domain }}{% url 'reset-password' uidb64=uid token=token %}
+{% endblock %}

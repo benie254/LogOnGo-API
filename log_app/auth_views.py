@@ -6,7 +6,7 @@ from log_app import auth_serializer
 from log_app.email import send_welcome_email
 from log_app.renderers import UserJSONRenderer
 from log_app.models import MyUser, Site, Profile
-from log_app.auth_serializer import ChangePasswordSerializer, PetrolStationSerializer, UserProfileSerializer, UserSerializer
+from log_app.auth_serializer import ChangePasswordSerializer, PasswordResetRequestSerializer, PasswordResetSerializer, PetrolStationSerializer, UserProfileSerializer, UserSerializer
 import jwt, datetime
 from rest_framework.generics import CreateAPIView
 from rest_framework import permissions
@@ -24,6 +24,8 @@ from rest_framework.permissions import AllowAny,IsAuthenticated
 from log_app.auth_serializer import UserLoginSerializer,UserRegistrationSerializer
 
 from rest_framework import generics
+from rest_framework.decorators import api_view, renderer_classes, permission_classes
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -38,6 +40,37 @@ from django_rest_passwordreset.signals import reset_password_token_created
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
 JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 
+from django.contrib.sites.shortcuts import get_current_site
+from django.urls import reverse
+import jwt
+from django.conf import settings
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+# from .renderers import UserRenderer
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.contrib.sites.shortcuts import get_current_site
+from django.urls import reverse
+# from .utils import Util
+from django.shortcuts import redirect
+from django.http import HttpResponsePermanentRedirect
+import os
+from django.template.loader import render_to_string
+import random
+from datetime import timedelta
+from django.conf import settings
+from django.utils import timezone
+
+from rest_framework import parsers, renderers, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+
+from .tokens import account_activation_token
 # Create your views here.'
 class UserProfile(APIView):
     def get_user_profiles(self,request):
@@ -261,33 +294,94 @@ class ChangePasswordView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = ChangePasswordSerializer
 
-class ResetPassword(APIView):
-    def post(self, request, reset_password_token, *args, **kwargs):
-        serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username=serializer.validated_data['username']
-        receiver=serializer.validated_data['email']
-        pass_reset = "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
-        sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-        msg = "<p>We have received your request to reset your LogOnGo account password.</p><p>If you made this request, please click the following link to proceed with your password reset:</p><a>" + pass_reset + "</a>"
-        message = Mail(
-            from_email = Email("davinci.monalissa@gmail.com"),
-            to_emails = receiver,
-            subject = "Password Reset Request",
-            html_content='<p>Hello, ' + str(username) + ', <br><br>' + msg
-        )
+class PasswordResetRequest(APIView):
+    def post(self, request,id):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            receiver = request.data['email']
+            username = request.data['username']
+            serializer.save()
+            user = request.user 
+            user_id = user.id
+            current_site = get_current_site(request)
+            myHtml = render_to_string('reset-pass.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user_id)),
+                # method will generate a hash value with user related data
+                'token': account_activation_token.make_token(user),
+            })
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            msg = "<p>We have received your request to reset the password for your account at LogOnGo.</p><p>Please follow the link below to reset your old password and create a new one:</p> <br> <p></p> <br><br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = "Password Reset Request",
+                html_content='<p>Hello, ' + str(username) + ', <br><br>' + myHtml
+            )
+            print(message)
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Password reset link sent successfully. Please check your email.',
+                }
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class PasswordReset(APIView):
+#     permission_classes = (AllowAny,)
+    
+@api_view(('GET',))
+@renderer_classes((JSONRenderer,))
+@permission_classes([AllowAny,])
+def activate(request, uidb64, token):
+        permission_classes = (AllowAny,)
         try:
-            sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
-            response = sendgrid_client.send(message)
-            print(response.status_code)
-            print(response.body)
-            print(response.headers)
-        except Exception as e:
-            print(e)
-        status_code = status.HTTP_201_CREATED
-        response = {
-            'success' : 'True',
-            'status code' : status_code,
-            'message': 'Password reset request sent successfully!',
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = MyUser.objects.get(pk=uid)
+            print("found user with id:", uid)
+        except (TypeError, ValueError, OverflowError, MyUser.DoesNotExist):
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            print("uid decoded:",uid)
+            user = None 
+            print("no user")
+        if user is not None and account_activation_token.check_token(user, token):
+            print("success")
+            response = Response()
+            successMsg = 'Confirmed! Activation link is valid.'
+            response.data = {
+                'success':successMsg,
             }
-        return Response(serializer.data)
+            # return response 
+            return redirect('reset-password-confirmed',uid)
+        else:
+            Http404
+            print("failure")
+            response = Response()
+            errorMsg = 'Sorry, activation link is invalid.'
+            response.data = {
+                'error':errorMsg,
+            }
+            return response 
+            # serializer = PasswordResetSerializer
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ResetPasswordView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = PasswordResetSerializer
+        
+        
+
+
+

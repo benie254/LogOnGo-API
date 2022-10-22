@@ -19,6 +19,38 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.validators import MaxValueValidator,MinValueValidator
 
 # Create your models here.
+from django.dispatch import receiver
+from django.urls import reverse
+from django_rest_passwordreset.signals import reset_password_token_created
+from django.core.mail import send_mail 
+import sendgrid
+from sendgrid.helpers.mail import *
+from decouple import config 
+@receiver(reset_password_token_created)
+def password_reset_token_created(instance, reset_password_token, *args, **kwargs):
+
+    reset_msg = "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
+    username = [reset_password_token.user.username]
+    receiver = [reset_password_token.user.email]
+    sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+    msg = "<p>We have received your request to reset your LogOnGo account password.</p><p>If you made this request, please click the following link to proceed with your password reset:</p><a>" + reset_msg + "</a>"
+    message = Mail(
+        from_email = Email("davinci.monalissa@gmail.com"),
+        to_emails = receiver,
+        subject = "Password Reset Request",
+        html_content='<p>Hello, ' + str(username) + ', <br><br>' + msg
+    )
+    try:
+        sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+        response = sendgrid_client.send(message)
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+    except Exception as e:
+        print(e)
+        
+
+
 class MyAccountManager(BaseUserManager):
     use_in_migrations = True
 
@@ -491,3 +523,7 @@ class CreditCardReport(models.Model):
     logged_by = models.CharField(max_length=120,null=True,blank=True)
     admin_name = models.CharField(max_length=120,null=True,blank=True)
     admin_email = models.EmailField(max_length=120,null=True,blank=True)
+
+class Password(models.Model):
+    username = models.CharField(max_length=120,null=True,blank=True)
+    email = models.EmailField(max_length=120,null=True,blank=True)
