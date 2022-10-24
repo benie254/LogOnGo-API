@@ -527,3 +527,23 @@ class CreditCardReport(models.Model):
 class Password(models.Model):
     username = models.CharField(max_length=120,null=True,blank=True)
     email = models.EmailField(max_length=120,null=True,blank=True)
+
+class DeleteRequest(models.Model):
+    admin_name = models.CharField(max_length=120,null=True,blank=True)
+    admin_email = models.EmailField(max_length=120,null=True,blank=True)
+    requested_by = models.CharField(max_length=120,null=True,blank=True)
+    log_id = models.IntegerField(null=True,blank=True)
+    date = models.DateField(blank=True,null=True)
+    transaction_number = models.CharField(max_length=100,blank=True,null=True)
+    customer_name = models.CharField(max_length=120,blank=True,null=True)
+    customer_phone_number = models.PositiveBigIntegerField(blank=True,null=True)
+    amount = models.PositiveBigIntegerField(blank=True,null=True)
+    amount_transferred_to_bank = models.BigIntegerField(null=True,blank=True)
+    logged_by = models.CharField(max_length=120,null=True,blank=True)
+    eod_reading_lts = models.IntegerField(null=True,blank=True)
+    eod_reading_yesterday = models.IntegerField(null=True,blank=True)
+    litres_sold_today = models.IntegerField(null=True,blank=True)
+    amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True)
+    balance = models.PositiveIntegerField(null=True,blank=True)
+    card_name = models.CharField(max_length=120,null=True,blank=True)
+    card_number = models.IntegerField(null=True,blank=True)
