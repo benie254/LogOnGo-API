@@ -244,6 +244,8 @@ class LoginView(APIView):
             'last_name':user.last_name,
             'petrol_station':user.petrol_station,
             'id':user.id,
+            'is_staff':user.is_staff,
+            'is_superuser':user.is_superuser,
         }
         return response 
 
