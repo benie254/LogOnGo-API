@@ -534,6 +534,7 @@ class DeleteRequest(models.Model):
     requested_by = models.CharField(max_length=120,null=True,blank=True)
     log_id = models.IntegerField(null=True,blank=True)
     date = models.DateField(blank=True,null=True)
+    date_requested = models.DateField(default=timezone.now)
     transaction_number = models.CharField(max_length=100,blank=True,null=True)
     customer_name = models.CharField(max_length=120,blank=True,null=True)
     customer_phone_number = models.PositiveBigIntegerField(blank=True,null=True)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from log_app.models import Fuel, FuelReceived, LogCreditCard, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Pump, Site
+from log_app.models import DeleteRequest, Fuel, FuelReceived, LogCreditCard, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Pump, Site
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.validators import UniqueValidator
@@ -80,4 +80,21 @@ class MpesaReportSerializer(serializers.ModelSerializer):
 class CreditCardReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogCreditCard
-        fields = ('id','date','card_name','card_number','amount','logged_by','admin_name','admin_email')              
+        fields = ('id','date','card_name','card_number','amount','logged_by','admin_name','admin_email')    
+
+class DeleteLogRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeleteRequest
+        fields = ('id','log_id','date','date_requested','eod_reading_lts','eod_reading_yesterday','litres_sold_today','amount_earned_today','balance','logged_by')
+
+class DeleteMpesaRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeleteRequest
+        fields = ('id','log_id','date','date_requested','transaction_number','amount','amount_transferred_to_bank','customer_name','customer_phone_number','logged_by')
+
+class DeleteCreditRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeleteRequest
+        fields = ('id','log_id','date','date_requested','card_name','card_number','amount','logged_by','admin_name','admin_email','requested_by')
+
+

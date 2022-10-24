@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, render,redirect
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import ContactSerializer, CreditCardReportSerializer, FuelReceivedSerializer, FuelSerializer, IncidentSerializer, LogCreditCardSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer, PumpSerializer
+from log_app.serializer import ContactSerializer, CreditCardReportSerializer, DeleteCreditRequestSerializer, DeleteLogRequestSerializer, DeleteMpesaRequestSerializer, FuelReceivedSerializer, FuelSerializer, IncidentSerializer, LogCreditCardSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer, PumpSerializer
 
 
 from django.http import HttpResponse,Http404, JsonResponse
@@ -22,6 +22,7 @@ from log_app.models import Announcement, Contact, Incident, Log, LogMpesa
 from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
 from django.core.paginator import Paginator
+from django.template.loader import render_to_string
 # Create your views here.
 class Announcements(APIView):
     permission_classes=(AllowAny,)
@@ -1912,7 +1913,11 @@ class EmailCreditCardReport(APIView):
             date=serializers.validated_data['date']
             card_name=serializers.validated_data['transaction_number']
             card_number=serializers.validated_data['customer_name']
+            customer_phone_number=serializers.validated_data['customer_phone_number']
             amount=serializers.validated_data['amount']
+            amount_transferred_to_bank=serializers.validated_data['amount_transferred_to_bank']
+            daily_total=serializers.validated_data['daily_total']
+            cumulative_amount=serializers.validated_data['cumulative_amount']
             
             logged_by=serializers.validated_data['logged_by']
             username=serializers.validated_data['admin_name']
@@ -2049,3 +2054,166 @@ class ContactAdmin(APIView):
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+
+class DeleteLogRequest(APIView):
+    def post(self, request):
+        serializer = DeleteLogRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            log_id = request.data['log_id']
+            date = request.data['date']
+            date_requested = request.data['date_requested']
+            eod = request.data['eod_reading_lts']
+            eod_yesterday = request.data['eod_reading_yesterday']
+            litres_sold = request.data['litres_sold_today']
+            amount = request.data['amount']
+            balance = request.data['balance']
+            logged_by = request.data['logged_by']
+            receiver = request.data['admin_email']
+            username = request.data['admin_name']
+            requested_by = request.data['requested_by']
+            serializer.save()
+            myHtml = render_to_string('email/delete-log-request.html', {
+                'log_id':log_id,
+                'date':date,
+                'date_requested':date_requested,
+                'eod':eod,
+                'eod_yesterday':eod_yesterday,
+                'litres_sold':litres_sold,
+                'amount':amount,
+                'balance':balance,
+                'username':username,
+                'logged_by':logged_by,
+                'requested_by':requested_by,
+            })
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = "Delete Request: General Log",
+                html_content= myHtml
+            )
+            print(message)
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Delete request sent to the admin.',
+                }
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class DeleteMpesaRequest(APIView):
+    def post(self, request):
+        serializer = DeleteMpesaRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            log_id = request.data['log_id']
+            date = request.data['date']
+            date_requested = request.data['date_requested']
+            transaction = request.data['transaction_number']
+            bank = request.data['amount_transferred_to_bank']
+            amount = request.data['amount']
+            customer_name = request.data['customer_name']
+            customer_no = request.data['customer_phone_number']
+            logged_by = request.data['logged_by']
+            receiver = request.data['admin_email']
+            username = request.data['admin_name']
+            requested_by = request.data['requested_by']
+            serializer.save()
+            myHtml = render_to_string('email/delete-mpesa-request.html', {
+                'log_id':log_id,
+                'date':date,
+                'date_requested':date_requested,
+                'transaction':transaction,
+                'bank':bank,
+                'amount':amount,
+                'customer_name':customer_name,
+                'customer_no':customer_no,
+                'username':username,
+                'logged_by':logged_by,
+                'requested_by':requested_by,
+            })
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = "Delete Request: Mpesa Log",
+                html_content= myHtml
+            )
+            print(message)
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Delete request sent to the admin.',
+                }
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class DeleteCreditCardRequest(APIView):
+    def post(self, request):
+        serializer = DeleteCreditRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            log_id = request.data['log_id']
+            date = request.data['date']
+            date_requested = request.data['date_requested']
+            card_name = request.data['card_name']
+            card_no = request.data['card_number']
+            amount = request.data['amount']
+            logged_by = request.data['logged_by']
+            receiver = request.data['admin_email']
+            username = request.data['admin_name']
+            requested_by = request.data['requested_by']
+            serializer.save()
+            myHtml = render_to_string('email/delete-credit-request.html', {
+                'log_id':log_id,
+                'date':date,
+                'date_requested':date_requested,
+                'card_name':card_name,
+                'card_no':card_no,
+                'amount':amount,
+                'username':username,
+                'logged_by':logged_by,
+                'requested_by':requested_by,
+            })
+            sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
+            message = Mail(
+                from_email = Email("davinci.monalissa@gmail.com"),
+                to_emails = receiver,
+                subject = "Delete Request: Credit Card",
+                html_content= myHtml
+            )
+            print(message)
+            try:
+                sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
+                response = sendgrid_client.send(message)
+                print(response.status_code)
+                print(response.body)
+                print(response.headers)
+            except Exception as e:
+                print(e)
+
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success' : 'True',
+                'status code' : status_code,
+                'message': 'Delete request sent to the admin.',
+                }
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
