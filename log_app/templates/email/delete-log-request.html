@@ -7,27 +7,18 @@
     </div>
     <div class="card">
         <div class="card-header">
-            <h2 class="text-center">Requested by: {{requested_by}} on {{date_requested | date}}</h2>
+            <h2 class="text-center">Requested by: {{requested_by}} on {{date_requested}}</h2>
         </div>
         <div class="card-body">
             <div class="card-title text-center">
                 Log type: General log | Log date: {{date}}
             </div>
-            <div class="row">
-                <div class="col">
-                    <ul>
-                        <li>EOD Reading: {{eod}}</li>
-                        <li>EOD Yesterday: {{eod_yesterday}}</li>
-                        <li>Litres sold: {{litres_sold}}</li>
-                    </ul>
-                </div>
-                <div class="col">
-                    <ul>
-                        <li>Amount: {{amount}}</li>
-                        <li>Balance: {{balance}}</li>
-                    </ul>
-                </div>
-            </div>
+            <ul>
+                <li>EOD Reading: {{eod}}</li>
+                <li>EOD Yesterday: {{eod_yesterday}}</li>
+                <li>Litres sold: {{litres_sold}}</li>
+                <li>Amount: {{amount}}</li>
+            </ul>
         </div>
         <div class="card-footer">
             <small class="text-center">Log ID: {{log_id}} | Logged by {{logged_by}}</small>

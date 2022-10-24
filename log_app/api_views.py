@@ -2067,10 +2067,9 @@ class DeleteLogRequest(APIView):
             eod_yesterday = request.data['eod_reading_yesterday']
             litres_sold = request.data['litres_sold_today']
             amount = request.data['amount']
-            balance = request.data['balance']
             logged_by = request.data['logged_by']
-            receiver = request.data['admin_email']
-            username = request.data['admin_name']
+            receiver='fullstack.benie@gmail.com'
+            username='Janja'
             requested_by = request.data['requested_by']
             serializer.save()
             myHtml = render_to_string('email/delete-log-request.html', {
@@ -2081,7 +2080,6 @@ class DeleteLogRequest(APIView):
                 'eod_yesterday':eod_yesterday,
                 'litres_sold':litres_sold,
                 'amount':amount,
-                'balance':balance,
                 'username':username,
                 'logged_by':logged_by,
                 'requested_by':requested_by,
@@ -2124,10 +2122,10 @@ class DeleteMpesaRequest(APIView):
             customer_name = request.data['customer_name']
             customer_no = request.data['customer_phone_number']
             logged_by = request.data['logged_by']
-            receiver = request.data['admin_email']
-            username = request.data['admin_name']
             requested_by = request.data['requested_by']
             serializer.save()
+            receiver='fullstack.benie@gmail.com'
+            username='Janja'
             myHtml = render_to_string('email/delete-mpesa-request.html', {
                 'log_id':log_id,
                 'date':date,
@@ -2177,10 +2175,10 @@ class DeleteCreditCardRequest(APIView):
             card_no = request.data['card_number']
             amount = request.data['amount']
             logged_by = request.data['logged_by']
-            receiver = request.data['admin_email']
-            username = request.data['admin_name']
             requested_by = request.data['requested_by']
             serializer.save()
+            receiver='fullstack.benie@gmail.com'
+            username='Janja'
             myHtml = render_to_string('email/delete-credit-request.html', {
                 'log_id':log_id,
                 'date':date,
