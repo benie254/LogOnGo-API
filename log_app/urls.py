@@ -61,4 +61,7 @@ urlpatterns = [
     url(r'^email-credit-card-report/$',api_views.EmailCreditCardReport.as_view(),name='email_credit_card_report'),
     url(r'^incident-report/$',api_views.IncidentReport.as_view(),name='incident_report'),
     url(r'^contact-admin/$',api_views.ContactAdmin.as_view(),name='contact_admin'),
+    url(r'^delete-log/request/$',api_views.DeleteLogRequest.as_view(),name='delete-log-request'),
+    url(r'^delete-mpesa/request/$',api_views.DeleteMpesaRequest.as_view(),name='delete-mpesa-request'),
+    url(r'^delete-credit-card/request/$',api_views.DeleteCreditCardRequest.as_view(),name='delete-credit-card-request'),
 ]
