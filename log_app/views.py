@@ -15,4 +15,4 @@ def home(request):
     today_fuel_log = Log.objects.all().filter(date=today).filter(fuel_id=1).first()
     # petrol_received = FuelReceived.objects.all().filter(fuel_id=1).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
     print(fuels)
-    return render(request,'index.html',{"fuels":fuels,"users":users,"logs":logs,"today_fuel_log":today_fuel_log,"prof":prof,"announcements":announcements,"page_obj":page_obj})
+    return render(request,'index.html',{"fuels":fuels,"users":users,"logs":logs,"today_fuel_log":today_fuel_log,"prof":prof,"announcements":announcements})
