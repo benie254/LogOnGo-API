@@ -24,12 +24,27 @@ MODE=os.getenv("MODE", default="dev")
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', default=False)
 
-DATABASES = {
+# development
+if config('MODE')=="dev":
+   DATABASES = {
+       'default': {
+           'ENGINE': 'django.db.backends.postgresql_psycopg2',
+           'NAME': os.getenv('DB_NAME'),
+           'USER': os.getenv('DB_USER'),
+           'PASSWORD': os.getenv('DB_PASSWORD'),
+           'HOST': os.getenv('DB_HOST'),
+           'PORT': '',
+       }
+    }
+#prod
+else:
+    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': 'db.sqlite3',
     }
 }
+
 
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
@@ -112,7 +127,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:4200',
     'http://127.0.0.1:8000',
     'https://logongo.herokuapp.com',
-    'https://log-on-go.web.app/,'
+    'https://log-on-go.web.app',
 )
 
 MIDDLEWARE = [
