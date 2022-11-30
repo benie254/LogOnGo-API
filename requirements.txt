@@ -44,6 +44,7 @@ PyJWT==1.7.1
 pyotp==2.7.0
 pyparsing==3.0.9
 python-decouple==3.6
+python-dotenv==0.21.0
 python-http-client==3.3.7
 pytz==2022.2.1
 qrcode==7.3.1
