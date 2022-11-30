@@ -24,7 +24,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 
-from log_app.models import LogCreditCard, MyUser, Log, LogMpesa, Fuel, FuelReceived, Incident, Contact, Announcement, Pump
+from log_app.models import LogCreditCard, MyUser, Log, LogMpesa, Fuel, FuelReceived, Incident, Contact, Announcement
 from log_app.forms import UserChangeForm,MyRegForm
 
 # Register your models here.
@@ -223,7 +223,6 @@ class UserAdmin(admin.ModelAdmin):
         return super().response_add(request, obj, post_url_continue)
 
 admin.site.register(Fuel)
-admin.site.register(Pump)
 admin.site.register(Log)
 admin.site.register(LogMpesa)
 admin.site.register(FuelReceived)

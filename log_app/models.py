@@ -285,281 +285,197 @@ def update_site_signal(sender, instance, created, **kwargs):
         Site.objects.create(user=instance)
     instance.site.save()
 
+
 class Fuel(models.Model):
     CHOICES = (('Petrol','Petrol'),('Diesel','Diesel'),('Gas','Gas'))
-    fuel_type = models.CharField(max_length=60,choices=CHOICES)
-    price_per_litre = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        error_messages={
-            "max_digits": "Price should not be more than 5 digits.",
-            "decimal_places": "Price should have two decimal places."
-        }
-        )
-    pumps = models.PositiveIntegerField()
-    initial_litres_in_tank = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
-        error_messages={
-            "max_digits": "Initial litres should not be more than 8 digits.",
-            "decimal_places": "Initial litres should have two decimal places."
-        }
-        )
+    fuel_type = models.CharField(max_length=60,choices=CHOICES,default='')
+    pp_litre = models.DecimalField(max_digits=5,decimal_places=2,default=0.00)
+    pumps = models.PositiveIntegerField(default=0)
+    tank_init = models.DecimalField(max_digits=8,decimal_places=2,default=0.00)
     
-
     def __int__(self):
-        return self.price_per_litre
+        return self.pp_litre
 
-class Pump(models.Model):
-    PUMPS = (('Pump One','Pump One'),('Pump Two','Pump Two'),('Pump Three','Pump Three'),('Pump Four','Pump Four'))
-    pump_name = models.CharField(max_length=60,choices=PUMPS,default='')
-    initial_litres_in_tank = models.DecimalField(
-        max_digits=8,decimal_places=2,default=0,
-        error_messages={
-            "max_digits": "Initial litres should not be more than 8 digits.",
-            "decimal_places": "Initial litres should have two decimal places."
-        }
-        )
-
-    def __str__(self):
-        return self.pump_name
-    
 class Log(models.Model):
-    date = models.DateField(default=timezone.now)
-    formatted_date = models.CharField(max_length=200,null=True,blank=True)
+    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
-    pump = models.ForeignKey(Pump,on_delete=models.CASCADE,null=True)
-    eod_reading_lts = models.DecimalField(max_digits=19,decimal_places=2)
-    eod_reading_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
-    total_litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True,default=0)
-    amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True)
-    balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
-    updated_balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
-    balance_yesterday = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
-    cumulative_litres_sold_today = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True,default=0)
-    cumulative_amount_today = models.PositiveBigIntegerField(null=True,blank=True)
-    cumulative_balance_today = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    fuel_type = models.CharField(max_length=60,null=True,blank=True)
+    pp_litre = models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True)
+    date = models.DateField(default=timezone.now)
+    long_date = models.CharField(max_length=200,null=True,blank=True)
+    eod_reading = models.DecimalField(max_digits=19,decimal_places=2,default=0.00)
+    eod_yesterday = models.DecimalField(max_digits=19,decimal_places=2,default=0.00)
+    litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    amount_td = models.PositiveBigIntegerField(null=True,blank=True)
+    bal = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    bal_yesterday = models.DecimalField(max_digits=18,decimal_places=2,default=0.00)
+    updated_bal = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    cumulative_litres_td = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    cumulative_amount_td = models.PositiveBigIntegerField(null=True,blank=True)
+    cumulative_bal_td = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
     first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
+    logged_by = models.CharField(max_length=120,null=True,blank=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
     edited_by = models.CharField(max_length=120,null=True,blank=True)
-    user_id = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
-    logged_by = models.CharField(max_length=120,null=True,blank=True)
-    site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
 
     def __int__(self):
-        return self.eod_reading_lts
-
-    @classmethod 
-    def search_by_date(cls,log_date):
-        try:
-        # convert data from the string url
-            date = dt.datetime.strptime(log_date, '%Y-%m-%d').date()
-
-        except ValueError:
-        # raise 404 when value error is thrown
-            raise Http404()
-            assert False
-
-        if date == dt.date.today():
-            today = dt.date.today()
-            today_logs = cls.objects.filter(date=today)
-            return today_logs 
-
-        past_logs = cls.objects.filter(date=log_date)
-        return past_logs
-
+        return self.eod_reading
 
 class LogMpesa(models.Model):
-    date = models.DateField(default=timezone.now)
-    formatted_date = models.CharField(max_length=200,null=True,blank=True)
+    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
-    transaction_number = models.CharField(max_length=30,default=0)
-    customer_name = models.CharField(max_length=120,default='')
-    customer_phone_number = models.PositiveBigIntegerField(default=0)
+    fuel_type = models.CharField(max_length=60,null=True,blank=True)
+    pp_litre = models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True)
+    date = models.DateField(default=timezone.now)
+    long_date = models.CharField(max_length=200,null=True,blank=True)
+    transaction_no = models.CharField(max_length=30,default='')
+    customer = models.CharField(max_length=120,default='')
+    customer_no = models.PositiveBigIntegerField(default=0)
     amount = models.PositiveBigIntegerField(default=0)
-    amount_transferred_to_bank = models.BigIntegerField(default=0)
-    daily_total = models.BigIntegerField(null=True,blank=True)
+    to_bank = models.BigIntegerField(default=0)
+    total_td = models.BigIntegerField(null=True,blank=True)
     cumulative_amount = models.IntegerField(null=True,blank=True)
     first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
+    logged_by = models.CharField(max_length=120,blank=True,null=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
     edited_by = models.CharField(max_length=120,null=True,blank=True)
-    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
-    logged_by = models.CharField(max_length=120,blank=True,null=True)
-    site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
 
     def __int__(self):
-        return self.transaction_number 
-
-    @classmethod
-    def logs_today(cls):
-        today = dt.date.today()
-        day_mpesa_logs = cls.objects.filter(date__date=today)
-        return day_mpesa_logs
-
-    @classmethod 
-    def search_by_date(cls,log_date):
-        try:
-        # convert data from the string url
-            date = dt.datetime.strptime(log_date, '%Y-%m-%d').date()
-
-        except ValueError:
-        # raise 404 when value error is thrown
-            raise Http404()
-            assert False
-
-        if date == dt.date.today():
-            today = dt.date.today()
-            today_logs = cls.objects.filter(date=today)
-            return today_logs 
-
-        past_logs = cls.objects.filter(date=log_date)
-        return past_logs
+        return self.transaction_no
 
 class LogCreditCard(models.Model):
+    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
-    amount = models.BigIntegerField(default=0)
-    card_name = models.CharField(max_length=120,default='')
-    card_number = models.BigIntegerField(validators=[MinValueValidator(1000000000000000),MaxValueValidator(9999999999999999)])
+    fuel_type = models.CharField(max_length=60,null=True,blank=True)
+    pp_litre = models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True)
     date = models.DateField(default=timezone.now)
-    formatted_date = models.CharField(max_length=200,null=True,blank=True)
-    logged_by = models.CharField(max_length=120,null=True,blank=True)
-    daily_total = models.BigIntegerField(null=True,blank=True)
+    long_date = models.CharField(max_length=200,null=True,blank=True)
+    card_name = models.CharField(max_length=120,default='')
+    card_no = models.BigIntegerField(validators=[MinValueValidator(1000000000000000),MaxValueValidator(9999999999999999)],default=0)
+    amount = models.BigIntegerField(default=0)
+    total_td = models.BigIntegerField(null=True,blank=True)
     cumulative_amount = models.IntegerField(null=True,blank=True)
+    logged_by = models.CharField(max_length=120,null=True,blank=True)
     first_logged = models.DateTimeField(auto_now_add=True,null=True,blank=True)
     last_edited =models.DateTimeField(auto_now=True,null=True,blank=True)
     edited_by = models.CharField(max_length=120,null=True,blank=True)
-    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
-    site_name = models.ForeignKey(Site,on_delete=models.CASCADE,null=True,blank=True)
 
-    @classmethod 
-    def search_by_date(cls,log_date):
-        try:
-        # convert data from the string url
-            date = dt.datetime.strptime(log_date, '%Y-%m-%d').date()
-
-        except ValueError:
-        # raise 404 when value error is thrown
-            raise Http404()
-            assert False
-
-        if date == dt.date.today():
-            today = dt.date.today()
-            today_logs = cls.objects.filter(date=today)
-            return today_logs 
-
-        past_logs = cls.objects.filter(date=log_date)
-        return past_logs
+    def __str__(self):
+        return self.card_name
 
 class FuelReceived(models.Model):
-    litres_received = models.PositiveIntegerField(default=0)
-    received_from = models.CharField(max_length=100)
-    date_received = models.DateField(default=timezone.now)
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
-    # pump = models.ForeignKey(Pump,on_delete=models.CASCADE,null=True)
-    total_fuel_received_today = models.PositiveIntegerField(default=0,null=True,blank=True) 
-    
+    date = models.DateField(default=timezone.now)
+    litres = models.PositiveIntegerField(default=0)
+    in_from = models.CharField(max_length=100,default=0)
+    total_td = models.PositiveBigIntegerField(default=0)
 
     def __int__(self):
-        return self.litres_received 
-
+        return self.litres
 
 class Incident(models.Model):
+    date = models.DateField(default=timezone.now)
     CHOICES = (('equipment','equipment'),('injury','injury'),('emergency','emergency'))
-    nature = models.CharField(max_length=100,choices=CHOICES)
-    description = models.TextField(max_length=5000)
-    reporter = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
-    your_name = models.CharField(max_length=120,null=True,blank=True)
-    your_email = models.EmailField(max_length=250,null=True,blank=True)
-    incident_date = models.DateField(default=timezone.now)
-    date_and_time_reported = models.DateTimeField(auto_now_add=True,null=True)
+    nature = models.CharField(max_length=100,choices=CHOICES,default='')
+    description = models.TextField(max_length=5000,default='')
+    name = models.CharField(max_length=120,default='')
+    email = models.EmailField(max_length=250,null=True,blank=True)
+    reported = models.DateTimeField(auto_now_add=True,null=True)
 
     def __str__(self):
         return self.description
 
 class Contact(models.Model):
-    subject = models.CharField(max_length=60)
-    message = models.TextField(max_length=5000)
-    your_name = models.CharField(max_length=120,null=True,blank=True) 
-    your_email = models.EmailField(max_length=150,null=True,blank=True)
+    date = models.DateField(default=timezone.now)
+    subject = models.CharField(max_length=60,default='')
+    message = models.TextField(max_length=5000,default='')
+    name = models.CharField(max_length=120,default='') 
+    email = models.EmailField(max_length=150,default='')
 
     def __str__(self):
         return self.message 
 
 class Announcement(models.Model):
-    subject = models.CharField(max_length=60)
-    announcement = models.TextField(max_length=5000) 
+    user = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
     date = models.DateField(default=timezone.now)
+    subject = models.CharField(max_length=60,default='')
+    announcement = models.TextField(max_length=5000,default='') 
     announced_by = models.CharField(max_length=120,null=True,blank=True) 
-    user_id = models.ForeignKey(MyUser,on_delete=models.CASCADE,null=True,blank=True)
 
     def __str__(self):
         return self.announcement
 
 class LogReport(models.Model):
-    user = models.ForeignKey(MyUser,null=True,on_delete=models.CASCADE)
     date = models.DateField(null=True,blank=True)
-    eod_reading_lts = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True,default=0.00)
-    eod_reading_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True,default=0.00)
-    litres_sold_today = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True,default=0.00)
-    amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True,default=0)
-    balance = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True,default=0.00)
+    eod_reading = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
+    eod_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
+    litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    amount_td = models.PositiveBigIntegerField(null=True,blank=True)
+    bal = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
     first_logged = models.DateTimeField(null=True,blank=True)
-    last_edited =models.DateTimeField(null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
-    admin_name = models.CharField(max_length=120,default='')
-    admin_email = models.EmailField(max_length=120,default='')
+    last_edited =models.DateTimeField(null=True,blank=True)
+    name = models.CharField(max_length=120,default='')
+    email = models.EmailField(max_length=120,default='')
 
     def __int__(self):
-        return self.eod_reading_lts
+        return self.eod_reading
 
 class MpesaReport(models.Model):
     date = models.DateField(blank=True,null=True)
-    transaction_number = models.CharField(max_length=100,blank=True,null=True)
-    customer_name = models.CharField(max_length=120,blank=True,null=True)
-    customer_phone_number = models.PositiveBigIntegerField(blank=True,null=True)
+    transaction_no = models.CharField(max_length=100,blank=True,null=True)
+    customer = models.CharField(max_length=120,blank=True,null=True)
+    customer_no = models.PositiveBigIntegerField(blank=True,null=True)
     amount = models.PositiveBigIntegerField(blank=True,null=True)
-    amount_transferred_to_bank = models.BigIntegerField(null=True,blank=True)
-    daily_total = models.BigIntegerField(null=True,blank=True)
+    to_bank = models.BigIntegerField(null=True,blank=True)
+    total_td = models.BigIntegerField(null=True,blank=True)
     cumulative_amount = models.IntegerField(null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
-    admin_name = models.CharField(max_length=120,null=True,blank=True)
-    admin_email = models.EmailField(max_length=120,null=True,blank=True)
+    name = models.CharField(max_length=120,null=True,blank=True)
+    email = models.EmailField(max_length=120,null=True,blank=True)
 
     def __int__(self):
-        return self.transaction_number
+        return self.transaction_no
 
 class CreditCardReport(models.Model):
-    amount = models.BigIntegerField(null=True,blank=True)
-    card_name = models.CharField(max_length=120,null=True,blank=True)
-    card_number = models.BigIntegerField(null=True,blank=True,validators=[MinValueValidator(1000000000000000),MaxValueValidator(9999999999999999)])
     date = models.DateField(default=timezone.now,null=True,blank=True)
-    logged_by = models.CharField(max_length=120,null=True,blank=True)
-    admin_name = models.CharField(max_length=120,null=True,blank=True)
-    admin_email = models.EmailField(max_length=120,null=True,blank=True)
-    daily_total = models.BigIntegerField(null=True,blank=True)
+    card_name = models.CharField(max_length=120,null=True,blank=True)
+    card_no = models.BigIntegerField(null=True,blank=True,validators=[MinValueValidator(1000000000000000),MaxValueValidator(9999999999999999)])
+    amount = models.BigIntegerField(null=True,blank=True)
+    total_td = models.BigIntegerField(null=True,blank=True)
     cumulative_amount = models.IntegerField(null=True,blank=True)
+    logged_by = models.CharField(max_length=120,null=True,blank=True)
+    name = models.CharField(max_length=120,null=True,blank=True)
+    email = models.EmailField(max_length=120,null=True,blank=True)
+
+    def __int__(self):
+        return self.card_no
 
 class Password(models.Model):
     username = models.CharField(max_length=120,null=True,blank=True)
     email = models.EmailField(max_length=120,null=True,blank=True)
 
 class DeleteRequest(models.Model):
-    admin_name = models.CharField(max_length=120,null=True,blank=True)
-    admin_email = models.EmailField(max_length=120,null=True,blank=True)
-    requested_by = models.CharField(max_length=120,null=True,blank=True)
     log_id = models.IntegerField(null=True,blank=True)
     date = models.CharField(max_length=120,blank=True,null=True)
     date_requested = models.CharField(max_length=120,default=timezone.now)
-    transaction_number = models.CharField(max_length=100,blank=True,null=True)
-    customer_name = models.CharField(max_length=120,blank=True,null=True)
-    customer_phone_number = models.PositiveBigIntegerField(blank=True,null=True)
+    transaction_no = models.CharField(max_length=100,blank=True,null=True)
+    customer = models.CharField(max_length=120,blank=True,null=True)
+    customer_no = models.PositiveBigIntegerField(blank=True,null=True)
     amount = models.PositiveBigIntegerField(blank=True,null=True)
-    amount_transferred_to_bank = models.BigIntegerField(null=True,blank=True)
-    logged_by = models.CharField(max_length=120,null=True,blank=True)
-    eod_reading_lts = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
-    eod_reading_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
-    litres_sold_today = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True,default=0)
-    amount_earned_today = models.PositiveBigIntegerField(null=True,blank=True)
-    balance = models.PositiveIntegerField(null=True,blank=True)
+    to_bank = models.BigIntegerField(null=True,blank=True)
+    eod_reading = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
+    eod_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
+    litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
+    amount_td = models.PositiveBigIntegerField(null=True,blank=True)
+    bal = models.PositiveIntegerField(null=True,blank=True)
     card_name = models.CharField(max_length=120,null=True,blank=True)
-    card_number = models.IntegerField(null=True,blank=True)
+    card_no = models.IntegerField(null=True,blank=True)
+    logged_by = models.CharField(max_length=120,null=True,blank=True)
+    user = models.CharField(max_length=120,null=True,blank=True)
+    admin = models.CharField(max_length=120,null=True,blank=True)
+    admin_email = models.EmailField(max_length=120,null=True,blank=True)
+
+    def __int__(self):
+        return self.transaction_no
+    

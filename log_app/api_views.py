@@ -1,80 +1,83 @@
+from log_app.serializer import (
+    ContactSerializer, CreditCardReportSerializer, DeleteCreditRequestSerializer, DeleteLogRequestSerializer, DeleteMpesaRequestSerializer, 
+    FuelReceivedSerializer, FuelSerializer, IncidentSerializer, LogCreditCardSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, 
+    AnnouncementSerializer,LogReport, MpesaReportSerializer, FuelSummarySerializer
+)
+from log_app.models import CreditCardReport, Fuel, FuelReceived, LogCreditCard, LogReport, MpesaReport, Incident
+
 import sendgrid
 from sendgrid.helpers.mail import * 
-import os 
 from decouple import config 
-from django.shortcuts import get_object_or_404, render,redirect 
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from log_app.serializer import ContactSerializer, CreditCardReportSerializer, DeleteCreditRequestSerializer, DeleteLogRequestSerializer, DeleteMpesaRequestSerializer, FuelReceivedSerializer, FuelSerializer, FuelSummarySerializer, IncidentSerializer, LogCreditCardSerializer, LogMpesaSerializer, LogReportSerializer, LogSerializer, AnnouncementSerializer,LogReport, MpesaReportSerializer, PumpSerializer, LogSummarySerializer, PumpSummarySerializer
-
-
-from django.http import HttpResponse,Http404, JsonResponse
-from django.contrib.auth.decorators import login_required
-from log_app.models import CreditCardReport, Fuel, FuelReceived, LogCreditCard, LogReport, MpesaReport, MyUser, Pump, Incident, Summary
+from django.http import Http404
 import datetime as dt 
 from django.db.models import Sum
-from django.contrib import messages
-
-from django.db.models import Max, Min,F, ExpressionWrapper, DecimalField, PositiveIntegerField
-
+from django.db.models import F, ExpressionWrapper, DecimalField, PositiveIntegerField
 from log_app.models import Announcement, Contact, Incident, Log, LogMpesa
-from rest_framework.permissions import AllowAny
-from rest_framework.pagination import PageNumberPagination
-from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 
 # Create your views here.
 class LatestAnnouncements(APIView):
-    def get_three_announcements(self):
-        try:
-            return Announcement.objects.all().order_by('-date')[:3]
-        except Announcement.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         announcement = Announcement.objects.all().order_by('-date')[:3]
         serializers = AnnouncementSerializer(announcement,many=True)
         return Response(serializers.data)
 
 class AllAnnouncements(APIView):
-    def get_announcements(self):
-        try:
-            return Announcement.objects.all().order_by('-date')
-        except Announcement.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         announcement = Announcement.objects.all().order_by('-date')
         serializers = AnnouncementSerializer(announcement,many=True)
         return Response(serializers.data)
 
-class AllFuels(APIView):
-    def get_all_fuels(self):
-        try:
-            return Fuel.objects.all().order_by('-pk')
-        except Fuel.DoesNotExist:
-            return Http404
+    def post(self, request, format=None):
+        serializers = AnnouncementSerializer(data=request.data)
+        if serializers.is_valid(raise_exception=True):
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class UpdateAnnouncement(APIView):
+    def get(self, request, id, format=None):
+        announce = Announcement.objects.all().filter(pk=id).last()
+        serializers = AnnouncementSerializer(announce,many=False)
+        return Response(serializers.data)
+
+    def put(self, request, id, format=None):
+        announcement = Announcement.objects.all().filter(pk=id).last()
+        serializers = AnnouncementSerializer(announcement,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id, format=None):
+        announcement = Announcement.objects.all().filter(pk=id).last()
+        announcement.delete()
+        return Response(status=status.HTTP_200_OK) 
+
+class AllFuels(APIView):
     def get(self, request, format=None):
-        fuuel_info = Fuel.objects.all().order_by('-pk')
+        fuuel_info = Fuel.objects.all().order_by('-pk')[:3]
         serializers = FuelSerializer(fuuel_info,many=True)
         return Response(serializers.data)
 
-class FuelInfo(APIView):
-    def get_fuel_info(self,fuel_id):
-        try:
-            return Fuel.objects.all().filter(pk=fuel_id).last()
-        except Fuel.DoesNotExist:
-            return Http404
+    def post(self, request, format=None):
+        serializers = FuelSerializer(data=request.data)
+        if serializers.is_valid(raise_exception=True):
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class FuelInfo(APIView):
     def get(self, request, fuel_id, format=None):
         fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
         serializers = FuelSerializer(fuel_info,many=False)
         return Response(serializers.data)
 
     def put(self, request, fuel_id, format=None):
-        fuel_info = Fuel.objects.all().filter(id=fuel_id).last()
+        fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
         serializers = FuelSerializer(fuel_info,request.data)
         if serializers.is_valid():
             serializers.save()
@@ -82,47 +85,90 @@ class FuelInfo(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class PumpInfo(APIView):
-    def get_pump_info(self,pump_id):
-        try:
-            return Pump.objects.all().filter(pk=pump_id).last()
-        except Pump.DoesNotExist:
-            return Http404
+    def delete(self, request, id, format=None):
+        contact = Fuel.objects.all().filter(pk=id).last()
+        contact.delete()
+        return Response(status=status.HTTP_200_OK) 
 
-    def get(self, request, pump_id, format=None):
-        pump_info = Pump.objects.all().filter(pk=pump_id).last()
-        serializers = PumpSerializer(pump_info,many=False)
+class PetrolInfo(APIView):
+    def get(self, request, format=None):
+        fuel_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
+        serializers = FuelSerializer(fuel_info,many=False)
         return Response(serializers.data)
 
-    def put(self, request, pump_id, format=None):
-        pump_info = Pump.objects.all().filter(pk=pump_id).last()
-        serializers = PumpSerializer(pump_info,request.data)
+class DieselInfo(APIView):
+    def get(self, request, format=None):
+        fuel_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
+        serializers = FuelSerializer(fuel_info,many=False)
+        return Response(serializers.data)
+
+class GasInfo(APIView):
+    def get(self, request, format=None):
+        fuel_info = Fuel.objects.all().filter(fuel_type='Gas').last()
+        serializers = FuelSerializer(fuel_info,many=False)
+        return Response(serializers.data)
+
+class AllFuelReceivedToday(APIView):
+    def get(self, request, format=None):
+        today = dt.date.today()
+        fuel_received_today = FuelReceived.objects.all().filter(date=today)
+        serializers = FuelReceivedSerializer(fuel_received_today,many=True)
+        return Response(serializers.data)
+
+    def post(self, request, format=None):
+        serializers = FuelReceivedSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data, status=status.HTTP_201_CREATED)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class FuelReceivedTodayInfo(APIView):
+    def get(self, request, fuel_id, format=None):
+        today = dt.date.today()
+        fuel_rcvd = FuelReceived.objects.all().filter(date=today).filter(fuel_id=fuel_id)
+        last_fuel_rcvd = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=today).last()
+        if last_fuel_rcvd:
+            last_fuel_rcvd.total_td = fuel_rcvd.aggregate(TOTAL = Sum('litres'))['TOTAL']
+            last_fuel_rcvd.save()
+            last_fuel_rcvd.refresh_from_db()
+            serializers = FuelReceivedSerializer(fuel_rcvd,many=True)
+            return Response(serializers.data)
+        return Response(status.HTTP_204_NO_CONTENT)
+
+class FuelReceivedDetails(APIView):
+    def get(self, request, id, format=None):
+        fuel_received = FuelReceived.objects.all().filter(pk=id)
+        serializers = FuelReceivedSerializer(fuel_received,many=True)
+        return Response(serializers.data)
+
+    def put(self, request, id, format=None):
+        fuel_info = FuelReceived.objects.all().filter(pk=id).last()
+        serializers = FuelReceivedSerializer(fuel_info,request.data)
         if serializers.is_valid():
             serializers.save()
             return Response(serializers.data)
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class AllLogs(APIView):
-    def get_all_logs(self):
-        try:
-            return Log.objects.all()
-        except Log.DoesNotExist:
-            return Http404
+    def delete(self, request, id, format=None):
+        contact = Fuel.objects.all().filter(pk=id).last()
+        contact.delete()
+        return Response(status=status.HTTP_200_OK) 
 
+class TotalFuelReceivedToday(APIView):
+    def get(self, request, fuel_id, format=None):
+        today = dt.date.today()
+        fuel_rcvd = FuelReceived.objects.all().filter(date=today).filter(fuel_id=fuel_id).last()
+        serializers = FuelReceivedSerializer(fuel_rcvd,many=False)
+        return Response(serializers.data)
+
+class AllLogs(APIView):
     def get(self, request, format=None):
         all_logs = Log.objects.all().order_by('-first_logged')
         serializers = LogSerializer(all_logs,many=True)
         return Response(serializers.data)
 
 class LogsToday(APIView):
-    def get_today_logs(self):
-        today = dt.date.today()
-        try:
-            return Log.objects.all().filter(date=today).order_by('-date')
-        except Log.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         today = dt.date.today()
         today_logs = Log.objects.all().filter(date=today).order_by('-date')
@@ -131,131 +177,87 @@ class LogsToday(APIView):
 
     def post(self, request, format=None):
         serializers = LogSerializer(data=request.data)
-        if serializers.is_valid():
+        if serializers.is_valid(raise_exception=True):
             serializers.save()
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserLogs(APIView):
-    def get_user_logs(self,user_id):
-        try:
-            return Log.objects.all().filter(user=user_id).order_by('-date')
-        except Log.DoesNotExist:
-            return Http404
-
     def get(self, request, user_id, format=None):
         user_logs = Log.objects.all().filter(user_id_id=user_id).order_by('-date')
         serializers = LogSerializer(user_logs,many=True)
         return Response(serializers.data)
 
 class FuelLogsToday(APIView):
-    def get_today_fuel_logs(self,fuel_id,pump_id):
-        today = dt.date.today()
-        try:
-            return Log.objects.all().filter(date=today).filter(fuel_id=fuel_id).filter(pump_id=pump_id).first()
-        except Log.DoesNotExist:
-            return Http404
-
-    def get(self, request, fuel_id, pump_id, format=None):
-        today = dt.date.today()
-        yesterday = today - dt.timedelta(days=1)
-        fuel_info = Fuel.objects.all().filter(id=fuel_id).last()
-        pump_info = Pump.objects.all().filter(id=pump_id).last()
-        if fuel_info and pump_info:
-            price_per_litre = fuel_info.price_per_litre
-            today_fuel_log = Log.objects.all().filter(date=today).filter(pump_id=pump_id).filter(fuel_id=fuel_id).first()
-            yesterday_fuel_logs = Log.objects.all().filter(pump_id=pump_id).filter(fuel_id=fuel_id).filter(date=yesterday).first()
-            fuel_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=today).aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-            serializers = LogSerializer(today_fuel_log,many=False)
-            if today_fuel_log:
-                if yesterday_fuel_logs:
-                    today_fuel_log.eod_reading_yesterday = yesterday_fuel_logs.eod_reading_lts
-                    today_fuel_log.save()
-                    eod_yesterday = today_fuel_log.eod_reading_yesterday
-                    today_fuel_log.balance_yesterday = yesterday_fuel_logs.balance
-                    today_fuel_log.save()
-                    bal_yesterday = today_fuel_log.balance_yesterday 
-                    today_fuel_log.balance = ExpressionWrapper((bal_yesterday) - F('total_litres_sold'),output_field=DecimalField())
-                    today_fuel_log.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F(eod_yesterday),output_field=DecimalField())
-                    today_fuel_log.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
-                    today_fuel_log.save()
-                    today_fuel_log.refresh_from_db()
-                    if today_fuel_log.balance and fuel_received:
-                        received = fuel_received.litres_received
-                        init_bal = today_fuel_log.balance
-                        today_fuel_log.updated_balance = (init_bal) + (received)
-                        today_fuel_log.save()
-                        today_fuel_log.refresh_from_db()
-                        updated_bal = today_fuel_log.updated_balance 
-                    elif updated_bal and fuel_received:
-                        today_fuel_log.updated_balance = (updated_bal) + (fuel_received)
-                        today_fuel_log.save()
-                        today_fuel_log.refresh_from_db()
-                else:
-                    today_fuel_log.total_litres_sold = ExpressionWrapper(F('eod_reading_lts')-F('eod_reading_yesterday'),output_field=DecimalField())
-                    today_fuel_log.amount_earned_today = ExpressionWrapper(F('total_litres_sold') * (price_per_litre),output_field=PositiveIntegerField())
-                    today_fuel_log.save()
-                    total_sold = today_fuel_log.total_litres_sold
-                    init = fuel_info.initial_litres_in_tank 
-                    today_fuel_log.balance = (init) - (total_sold)
-                    today_fuel_log.save()
-                    today_fuel_log.refresh_from_db()
-                    if today_fuel_log.balance and fuel_received:
-                        received = fuel_received.litres_received
-                        init_bal = today_fuel_log.balance
-                        today_fuel_log.updated_balance = (init_bal) + (received)
-                        today_fuel_log.save()
-                        today_fuel_log.refresh_from_db()
-                        updated_bal = today_fuel_log.updated_balance 
-                    elif updated_bal and fuel_received:
-                        today_fuel_log.updated_balance = (updated_bal) + (fuel_received)
-                        today_fuel_log.save()
-                        today_fuel_log.refresh_from_db()
-                today_fuel_log.cumulative_litres_sold_today = today_fuel_log.aggregate(TOTAL = Sum('total_litres_sold'))['TOTAL']
-                today_fuel_log.cumulative_amount_today = today_fuel_log.aggregate(TOTAL = Sum('amount_earned_today'))['TOTAL']
-                if today_fuel_log.updated_balance:
-                    today_fuel_log.cumulative_balance_today = today_fuel_log.aggregate(TOTAL = Sum('updated_balance'))['TOTAL']
-                else:
-                    today_fuel_log.cumulative_balance_today = today_fuel_log.aggregate(TOTAL = Sum('balance'))['TOTAL']
-                return Response(serializers.data)
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-class PumpSummaryToday(APIView):
-    def get_pump_summary(self,pump_id,fuel_id):
-        today = dt.date.today()
-        try:
-            return Log.objects.all().filter(fuel_id=fuel_id).filter(pump_id=pump_id).filter(date=today).first()
-        except Log.DoesNotExist:
-            return Http404
-
-    def get(self, request, pump_id, fuel_id, format=None):
-        today = dt.date.today()
-        pump_summary = Log.objects.all().filter(fuel_id=fuel_id).filter(pump_id=pump_id).filter(date=today).first()
-        serializers = PumpSummarySerializer(pump_summary,many=False)
-        return Response(serializers.data)
-        
-class FuelSummaryToday(APIView):
-    def get_fuel_summary(self,fuel_id):
-        today = dt.date.today()
-        try:
-            return Log.objects.all().filter(fuel_id=fuel_id).filter(date=today).first()
-        except Log.DoesNotExist:
-            return Http404
-
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
-        fuel_summary = Log.objects.all().filter(fuel_id=fuel_id).filter(date=today).first()
+        fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
+        if fuel_info:
+            pp_litre = fuel_info.pp_litre
+            logs = Log.objects.all().filter(date=today).filter(fuel_id=fuel_id).last()
+            logs_today = Log.objects.all().filter(date=today).filter(fuel_id=fuel_id)
+            if logs:
+                serializers = LogSerializer(logs_today,many=True)
+                logs.litres_sold = ExpressionWrapper(F('eod_reading') - F('eod_yesterday'),output_field=DecimalField())
+                logs.save()
+                logs.refresh_from_db()
+                logs.bal = ExpressionWrapper(F('bal_yesterday') - F('litres_sold'),output_field=DecimalField())
+                logs.amount_td = ExpressionWrapper(F('litres_sold') * (pp_litre),output_field=PositiveIntegerField())
+                logs.save()
+                logs.refresh_from_db()   
+                date = logs.date  
+                fuel_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=date).aggregate(TOTAL = Sum('litres'))['TOTAL']
+                if logs.bal and fuel_received:
+                    bal = logs.bal
+                    received = fuel_received.litres
+                    init_bal = bal
+                    logs.updated_bal = (init_bal) + (received)
+                    logs.save()
+                    logs.refresh_from_db()
+                elif logs.updated_bal and fuel_received:
+                    updated_bal = logs.updated_bal
+                    updated_bal = (updated_bal) + (fuel_received)
+                if logs.updated_bal:
+                    logs.cumulative_bal_td = logs_today.aggregate(TOTAL = Sum('updated_bal'))['TOTAL']
+                    logs.save()
+                    logs.refresh_from_db()
+                elif logs.bal:
+                    logs.cumulative_bal_td = logs_today.aggregate(TOTAL = Sum('bal'))['TOTAL']
+                    logs.save()
+                    logs.refresh_from_db()
+                if logs.litres_sold:
+                    logs.cumulative_litres_td = logs_today.aggregate(TOTAL = Sum('litres_sold'))['TOTAL']
+                    logs.save()
+                    logs.refresh_from_db()
+                if logs.amount_td:
+                    logs.cumulative_amount_td = logs_today.aggregate(TOTAL = Sum('amount_td'))['TOTAL']
+                    logs.save()
+                    logs.refresh_from_db()
+                return Response(serializers.data)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class FuelLogsYesterday(APIView):
+    def get(self, request, fuel_id, format=None):
+        today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
+        fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
+        if fuel_info:
+            logs = Log.objects.all().filter(date=yesterday).filter(fuel_id=fuel_id)
+            if logs:
+                serializers = LogSerializer(logs,many=True)
+                return Response(serializers.data)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+        
+class FuelSummaryToday(APIView):
+    def get(self, request, fuel_id, format=None):
+        today = dt.date.today()
+        fuel_summary = Log.objects.all().filter(fuel_id=fuel_id).filter(date=today).last()
         serializers = FuelSummarySerializer(fuel_summary,many=False)
         return Response(serializers.data)
 
 class AllMpesaLogs(APIView):
-    def get_all_mpesa_logs(self):
-        try:
-            return LogMpesa.objects.all().order_by('-first_logged')
-        except LogMpesa.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         all_mpesa_logs = LogMpesa.objects.all().order_by('-first_logged')
         serializers = LogMpesaSerializer(all_mpesa_logs,many=True)
@@ -268,16 +270,35 @@ class AllMpesaLogs(APIView):
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class AllCreditCardLogs(APIView):
-    def get_all_credit_card_logs(self):
-        try:
-            return LogCreditCard.objects.all().order_by('-first_logged')
-        except LogCreditCard.DoesNotExist:
-            return Http404
+class MpesaLogsToday(APIView):
+    def get(self, request, fuel_id, format=None):
+        today = dt.date.today()
+        today_mpesa_logs = LogMpesa.objects.all().filter(date=today).filter(fuel=fuel_id)
+        last_mpesa_log = LogMpesa.objects.all().filter(date=today).filter(fuel=fuel_id).last()
+        if last_mpesa_log:
+            mpesa_date = last_mpesa_log.date
+            last_mpesa_log.fuel_type = last_mpesa_log.fuel.fuel_type
+            last_mpesa_log.pp_litre = last_mpesa_log.fuel.pp_litre
+            last_mpesa_log.save()
+            last_mpesa_log.refresh_from_db()
+            last_mpesa_log.total_td = LogMpesa.objects.all().filter(date=mpesa_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
+            last_mpesa_log.cumulative_amount = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
+            last_mpesa_log.save()
+            last_mpesa_log.refresh_from_db()
+            serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
+            return Response(serializers.data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
+class UserMpesaLogs(APIView):
+    def get(self, request, user_id, format=None):
+        user_mpesa_logs = LogMpesa.objects.all().filter(user=user_id).order_by('-first_logged')
+        serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
+        return Response(serializers.data)
+
+class AllCreditCardLogs(APIView):
     def get(self, request, format=None):
         all_credit_card_logs = LogCreditCard.objects.all().order_by('-first_logged')
-        serializers = LogMpesaSerializer(all_credit_card_logs,many=True)
+        serializers = LogCreditCardSerializer(all_credit_card_logs,many=True)
         return Response(serializers.data)
 
     def post(self, request, format=None):
@@ -287,163 +308,77 @@ class AllCreditCardLogs(APIView):
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class MpesaLogsToday(APIView):
-    def get_today_mpesa_logs(self,fuel_id):
-        today = dt.date.today()
-        try:
-            return LogMpesa.objects.all().filter(date=today).filter(fuel=fuel_id)
-        except LogMpesa.DoesNotExist:
-            return Http404
-
-    def get(self, request, fuel_id, format=None):
-        today = dt.date.today()
-        first_mpesa_log = LogMpesa.objects.all().filter(date=today).filter(fuel=fuel_id).first()
-        today_mpesa_logs = LogMpesa.objects.all().filter(date=today).filter(fuel=fuel_id)
-        if first_mpesa_log:
-            serializers = LogMpesaSerializer(today_mpesa_logs,many=True)
-            return Response(serializers.data)
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
 class CreditCardLogsToday(APIView):
-    def get_today_credit_card_logs(self,fuel_id):
-        today = dt.date.today()
-        try:
-            return LogCreditCard.objects.all().filter(date=today).filter(fuel=fuel_id)
-        except LogCreditCard.DoesNotExist:
-            return Http404
-
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
-        first_credit_card_log = LogCreditCard.objects.all().filter(date=today).filter(fuel=fuel_id).first()
+        last_credit_card_log = LogCreditCard.objects.all().filter(date=today).filter(fuel=fuel_id).last()
         today_credit_card_logs = LogCreditCard.objects.all().filter(date=today).filter(fuel=fuel_id)
-        if first_credit_card_log:
+        if last_credit_card_log:
+            credit_card_date = last_credit_card_log.date
+            last_credit_card_log.fuel_type = last_credit_card_log.fuel.fuel_type
+            last_credit_card_log.pp_litre = last_credit_card_log.fuel.pp_litre
+            last_credit_card_log.save()
+            last_credit_card_log.refresh_from_db()
+            last_credit_card_log.total_td = LogCreditCard.objects.all().filter(date=credit_card_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
+            last_credit_card_log.cumulative_amount = LogCreditCard.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
+            last_credit_card_log.save()
+            last_credit_card_log.refresh_from_db()
             serializers = LogCreditCardSerializer(today_credit_card_logs,many=True)
             return Response(serializers.data)
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-class UserMpesaLogs(APIView):
-    def get_user_mpesa_logs(self,user_id):
-        try:
-            return LogMpesa.objects.all().filter(user=user_id).order_by('-first_logged')
-        except LogMpesa.DoesNotExist:
-            return Http404
-
-    def get(self, request, user_id, format=None):
-        user_mpesa_logs = LogMpesa.objects.all().filter(user=user_id).order_by('-first_logged')
-        serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
-        return Response(serializers.data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class UserCreditCardLogs(APIView):
-    def get_user_credit_card_logs(self,user_id):
-        try:
-            return LogCreditCard.objects.all().filter(user=user_id).order_by('-first_logged')
-        except LogCreditCard.DoesNotExist:
-            return Http404
-
     def get(self, request, user_id, format=None):
         user_credit_card_logs = LogCreditCard.objects.all().filter(user=user_id).order_by('-first_logged')
         serializers = LogCreditCardSerializer(user_credit_card_logs,many=True)
         return Response(serializers.data)
 
-class AllFuelReceivedToday(APIView):
-    def get_fuel_received(self):
-        today = dt.date.today()
-        try:
-            return FuelReceived.objects.all().filter(date_received=today)
-        except FuelReceived.DoesNotExist:
-            return Http404
-    
-    def get(self, request, format=None):
-        today = dt.date.today()
-        fuel_received_today = FuelReceived.objects.all().filter(date_received=today)
-        serializers = FuelReceivedSerializer(fuel_received_today,many=True)
-        return Response(serializers.data)
-
-    def post(self, request, format=None):
-        serializers = FuelReceivedSerializer(data=request.data)
-        if serializers.is_valid():
-            serializers.save()
-            return Response(serializers.data, status=status.HTTP_201_CREATED)
-        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class FuelReceivedTodayInfo(APIView):
-    def get_fuel_received_info(self,log_id):
-        log_details = Log.objects.all().filter(pk=log_id).first() 
-        if log_details:
-            log_date = log_details.date
-            fuel_id = log_details.fuel
-            try:
-                return FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=log_date)
-            except FuelReceived.DoesNotExist:
-                return Http404
-        else:
-            Http404
-    
-    def get(self, request, log_id, format=None):
-        today = dt.date.today()
-        log_details = Log.objects.all().filter(pk=log_id).first() 
-        if log_details:
-            log_date = log_details.date
-            fuel_id = log_details.fuel
-            fuel_received_info = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=log_date)
-            serializers = FuelReceivedSerializer(fuel_received_info,many=True)
-            return Response(serializers.data)
-        else:
-            fuel_id = log_id 
-            fuel_received_info = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=today)
-            serializers = FuelReceivedSerializer(fuel_received_info,many=True)
-            return Response(serializers.data)
-
-class TotalFuelReceivedToday(APIView):
-    def get_fuel_received_info(self,log_id):
-        log_details = Log.objects.all().filter(id=log_id).first() 
-        if log_details:
-            log_date = log_details.date
-            fuel_id = log_details.fuel
-            try:
-                return FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=log_date).first()
-            except FuelReceived.DoesNotExist:
-                return Http404
-        else:
-            Http404
-    
-    def get(self, request, log_id, format=None):
-        today = dt.date.today()
-        log_details = Log.objects.all().filter(id=log_id).first() 
-        if log_details:
-            log_date = log_details.date
-            fuel_id = log_details.fuel
-            first_fuel_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=log_date).first()
-            fuel_received_info = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=log_date)
-            if first_fuel_received:
-                first_fuel_received.total_fuel_received_today = fuel_received_info.aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-                first_fuel_received.save()
-                first_fuel_received.refresh_from_db()
-                serializers = FuelReceivedSerializer(fuel_received_info,many=False)
-                return Response(serializers.data)
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        else:
-            fuel_id = log_id 
-            first_fuel_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=today).first()
-            fuel_received_info = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date_received=today)
-            if first_fuel_received:
-                first_fuel_received.total_fuel_received_today = fuel_received_info.aggregate(TOTAL = Sum('litres_received'))['TOTAL']
-                first_fuel_received.save()
-                first_fuel_received.refresh_from_db()
-                serializers = FuelReceivedSerializer(fuel_received_info,many=False)
-                return Response(serializers.data)
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        
 class LogDetails(APIView):
-    def get_log_details(self,log_id):
-        try:
-            return Log.objects.all().filter(pk=log_id).first()
-        except Log.DoesNotExist:
-            return Http404
-    
     def get(self, request, log_id, format=None):
         log_details = Log.objects.all().filter(pk=log_id).first()
         serializers = LogSerializer(log_details,many=False)
+        log_details.fuel_type = log_details.fuel.fuel_type
+        log_details.pp_litre = log_details.fuel.pp_litre 
+        log_details.save()
+        log_details.refresh_from_db()
+        log_details.litres_sold = ExpressionWrapper(F('eod_reading') - F('eod_yesterday'),output_field=DecimalField())
+        log_details.save()
+        log_details.refresh_from_db()
+        log_details.bal = ExpressionWrapper(F('bal_yesterday') - F('litres_sold'),output_field=DecimalField())
+        log_details.amount_td = ExpressionWrapper(F('litres_sold') * F('pp_litre'),output_field=PositiveIntegerField())
+        log_details.save()
+        log_details.refresh_from_db()   
+        date = log_details.date  
+        fuel_id = log_details.fuel
+        fuel_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=date).aggregate(TOTAL = Sum('litres'))['TOTAL']
+        last_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=date).last()
+        logs_today = Log.objects.all().filter(date=date)
+        if log_details.bal and fuel_received:
+            bal = log_details.bal
+            received = last_received.litres
+            init_bal = bal
+            log_details.updated_bal = (init_bal) + (received)
+            log_details.save()
+            log_details.refresh_from_db()
+        elif log_details.updated_bal and fuel_received:
+            updated_bal = log_details.updated_bal
+            updated_bal = (updated_bal) + (fuel_received)
+        if log_details.updated_bal:
+            log_details.cumulative_bal_td = logs_today.aggregate(TOTAL = Sum('updated_bal'))['TOTAL']
+            log_details.save()
+            log_details.refresh_from_db()
+        elif log_details.bal:
+            log_details.cumulative_bal_td = logs_today.aggregate(TOTAL = Sum('bal'))['TOTAL']
+            log_details.save()
+            log_details.refresh_from_db()
+        if log_details.litres_sold:
+            log_details.cumulative_litres_td = logs_today.aggregate(TOTAL = Sum('litres_sold'))['TOTAL']
+            log_details.save()
+            log_details.refresh_from_db()
+        if log_details.amount_td:
+            log_details.cumulative_amount_td = logs_today.aggregate(TOTAL = Sum('amount_td'))['TOTAL']
+            log_details.save()
+            log_details.refresh_from_db()
         return Response(serializers.data)
 
     def put(self, request, log_id, format=None):
@@ -455,24 +390,25 @@ class LogDetails(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, id, format=None):
+        contact = Log.objects.all().filter(pk=id).last()
+        contact.delete()
+        return Response(status=status.HTTP_200_OK) 
+
 class MpesaLogDetails(APIView):
-    def get_mpesa_details(self,id):
-        try:
-            return LogMpesa.objects.all().filter(id=id).last()
-        except LogMpesa.DoesNotExist:
-            return Http404
-    
     def get(self, request, id, format=None):
         mpesa_details = LogMpesa.objects.all().filter(id=id).last()
-        if mpesa_details:
-            mpesa_date = mpesa_details.date
-            mpesa_details.daily_total = LogMpesa.objects.all().filter(date=mpesa_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
-            mpesa_details.cumulative_amount = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
-            mpesa_details.save()
-            mpesa_details.refresh_from_db()
-            serializers = LogMpesaSerializer(mpesa_details,many=False)
-            return Response(serializers.data)
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        mpesa_date = mpesa_details.date
+        mpesa_details.fuel_type = mpesa_details.fuel.fuel_type
+        mpesa_details.pp_litre = mpesa_details.fuel.pp_litre
+        mpesa_details.save()
+        mpesa_details.refresh_from_db()
+        mpesa_details.total_td = LogMpesa.objects.all().filter(date=mpesa_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
+        mpesa_details.cumulative_amount = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
+        mpesa_details.save()
+        mpesa_details.refresh_from_db()
+        serializers = LogMpesaSerializer(mpesa_details,many=False)
+        return Response(serializers.data)
 
     def put(self, request, id, format=None):
         mpesa_details = LogMpesa.objects.all().filter(id=id).first()
@@ -483,19 +419,21 @@ class MpesaLogDetails(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, id, format=None):
+        contact = LogMpesa.objects.all().filter(pk=id).last()
+        contact.delete()
+        return Response(status=status.HTTP_200_OK) 
+
 class CreditCardLogDetails(APIView):
-    
-    def get_credit_card_details(self,id):
-        try:
-            return LogCreditCard.objects.all().filter(id=id).last()
-        except LogCreditCard.DoesNotExist:
-            return Http404
-    
     def get(self, request, id, format=None):
-        credit_card_details = LogCreditCard.objects.all().filter(id=id).last()
+        credit_card_details = LogCreditCard.objects.all().filter(pk=id).last()
         if credit_card_details:
             credit_card_date = credit_card_details.date
-            credit_card_details.daily_total = LogCreditCard.objects.all().filter(date=credit_card_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
+            credit_card_details.fuel_type = credit_card_details.fuel.fuel_type
+            credit_card_details.pp_litre = credit_card_details.fuel.pp_litre
+            credit_card_details.save()
+            credit_card_details.refresh_from_db()
+            credit_card_details.total_td = LogCreditCard.objects.all().filter(date=credit_card_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
             credit_card_details.cumulative_amount = LogCreditCard.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
             credit_card_details.save()
             credit_card_details.refresh_from_db()
@@ -511,6 +449,11 @@ class CreditCardLogDetails(APIView):
             return Response(serializers.data)
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id, format=None):
+        contact = LogCreditCard.objects.all().filter(pk=id).last()
+        contact.delete()
+        return Response(status=status.HTTP_200_OK) 
 
 class PastLogs(APIView):
     def get(self,request,past_date):
@@ -534,8 +477,6 @@ class PastLogs(APIView):
         return Response(serializers.data)
 
 class PastMpesaLogs(APIView):
-    
-    
     def get(self,request,past_date):
         try:
         # convert data from the string url
@@ -557,8 +498,6 @@ class PastMpesaLogs(APIView):
         return Response(serializers.data)
 
 class PastCreditCardLogs(APIView):
-    
-    
     def get(self,request,past_date):
         try:
         # convert data from the string url
@@ -580,13 +519,6 @@ class PastCreditCardLogs(APIView):
         return Response(serializers.data)
 
 class EmailReport(APIView):
-    
-    def get_reports(self):
-        try:
-            return LogReport.objects.all()
-        except LogReport.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         reports = LogReport.objects.all()
         serializers = LogSerializer(reports,many=True)
@@ -596,17 +528,17 @@ class EmailReport(APIView):
         serializers = LogReportSerializer(data=request.data)
         if serializers.is_valid():
             # serializer.is_valid(raise_exception=True)
-            eod_reading_lts=serializers.validated_data['eod_reading_lts']
-            eod_reading_yesterday=serializers.validated_data['eod_reading_yesterday']
-            litres_sold_today=serializers.validated_data['litres_sold_today']
-            amount_earned_today=serializers.validated_data['amount_earned_today']
-            balance=serializers.validated_data['balance']
-            username=serializers.validated_data['admin_name']
+            eod_reading=serializers.validated_data['eod_reading']
+            eod_yesterday=serializers.validated_data['eod_yesterday']
+            litres_sold=serializers.validated_data['litres_sold']
+            amount_td=serializers.validated_data['amount_td']
+            bal=serializers.validated_data['bal']
+            username=serializers.validated_data['admin']
             receiver=serializers.validated_data['admin_email']
             serializers.save()
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-            msg = "Here is your requested email report:</p> <br> <ul><li>eod: " + str(eod_reading_lts) + " </li>eod_yesterday: " + str(eod_reading_yesterday) + " <li>litres sold: " + str(litres_sold_today) + " </li>amount: " + str(amount_earned_today) + " <li>bal: " + str(balance) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            msg = "Here is your requested email report:</p> <br> <ul><li>eod: " + str(eod_reading) + " </li>eod_yesterday: " + str(eod_yesterday) + " <li>litres sold: " + str(litres_sold) + " </li>amount: " + str(amount_td) + " <li>bal: " + str(bal) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
             message = Mail(
                 from_email = Email("davinci.monalissa@gmail.com"),
                 to_emails = receiver,
@@ -632,13 +564,6 @@ class EmailReport(APIView):
     
 
 class EmailMpesaReport(APIView):
-    
-    def get_mpesa_reports(self):
-        try:
-            return MpesaReport.objects.all()
-        except MpesaReport.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         reports = MpesaReport.objects.all()
         serializers = MpesaReportSerializer(reports,many=True)
@@ -649,20 +574,20 @@ class EmailMpesaReport(APIView):
         if serializers.is_valid():
             # serializer.is_valid(raise_exception=True)
             date=serializers.validated_data['date']
-            transaction_number=serializers.validated_data['transaction_number']
-            customer_name=serializers.validated_data['customer_name']
-            customer_phone_number=serializers.validated_data['customer_phone_number']
+            transaction_no=serializers.validated_data['transaction_no']
+            customer=serializers.validated_data['customer']
+            customer_no=serializers.validated_data['customer_no']
             amount=serializers.validated_data['amount']
-            amount_transferred_to_bank=serializers.validated_data['amount_transferred_to_bank']
-            daily_total=serializers.validated_data['daily_total']
+            to_bank=serializers.validated_data['to_bank']
+            total_td=serializers.validated_data['total_td']
             cumulative_amount=serializers.validated_data['cumulative_amount']
             logged_by=serializers.validated_data['logged_by']
-            username=serializers.validated_data['admin_name']
+            username=serializers.validated_data['admin']
             receiver=serializers.validated_data['admin_email']
             serializers.save()
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-            msg = "Here is your requested email report:</p> <br> <ul><li>date: " + str(date) + " </li><li>transaction no.: " + str(transaction_number) + "</li><li>customer's name: " + str(customer_name) + " </li><li>customer's phone number: " + str(customer_phone_number) + "</li><li>amount: " + str(amount) + "</li><li>amount transferred to bank: " + str(amount_transferred_to_bank) + "</li><li>daily total: " + str(daily_total) + "</li><li>cumulative amount: " + str(cumulative_amount) + "</li><li>logged by: " + str(logged_by) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            msg = "Here is your requested email report:</p> <br> <ul><li>date: " + str(date) + " </li><li>transaction no.: " + str(transaction_no) + "</li><li>customer's name: " + str(customer) + " </li><li>customer's phone number: " + str(customer_no) + "</li><li>amount: " + str(amount) + "</li><li>amount transferred to bank: " + str(to_bank) + "</li><li>daily total: " + str(total_td) + "</li><li>cumulative amount: " + str(cumulative_amount) + "</li><li>logged by: " + str(logged_by) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
             message = Mail(
                 from_email = Email("davinci.monalissa@gmail.com"),
                 to_emails = receiver,
@@ -687,13 +612,6 @@ class EmailMpesaReport(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EmailCreditCardReport(APIView):
-    
-    def get_credit_card_reports(self):
-        try:
-            return CreditCardReport.objects.all()
-        except CreditCardReport.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         reports = CreditCardReport.objects.all()
         serializers = CreditCardReportSerializer(reports,many=True)
@@ -705,18 +623,18 @@ class EmailCreditCardReport(APIView):
             # serializer.is_valid(raise_exception=True)
             date=serializers.validated_data['date']
             card_name=serializers.validated_data['card_name']
-            card_number=serializers.validated_data['card_number']
+            card_no=serializers.validated_data['card_no']
             amount=serializers.validated_data['amount']
-            daily_total=serializers.validated_data['daily_total']
+            total_td=serializers.validated_data['total_td']
             cumulative_amount=serializers.validated_data['cumulative_amount']
             
             logged_by=serializers.validated_data['logged_by']
-            username=serializers.validated_data['admin_name']
+            username=serializers.validated_data['admin']
             receiver=serializers.validated_data['admin_email']
             serializers.save()
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-            msg = "Here is your requested email report:</p> <br> <ul><li>date: " + str(date) + " </li><li>card name.: " + str(card_name) + "</li><li>card number: " + str(card_number) + " </li><li>amount: " + str(amount) + "</li><li>daily total: " + str(daily_total) + "</li><li>cumulative amount: " + str(cumulative_amount) + "</li><li>logged by: " + str(logged_by) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            msg = "Here is your requested email report:</p> <br> <ul><li>date: " + str(date) + " </li><li>card name.: " + str(card_name) + "</li><li>card number: " + str(card_no) + " </li><li>amount: " + str(amount) + "</li><li>daily total: " + str(total_td) + "</li><li>cumulative amount: " + str(cumulative_amount) + "</li><li>logged by: " + str(logged_by) + "</li></ul> <br> <small> The data committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
             message = Mail(
                 from_email = Email("davinci.monalissa@gmail.com"),
                 to_emails = receiver,
@@ -743,13 +661,6 @@ class EmailCreditCardReport(APIView):
 
 
 class IncidentReport(APIView):
-    
-    def get_incident_reports(self):
-        try:
-            return Incident.objects.all()
-        except IncidentReport.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         reports = Incident.objects.all()
         serializers = IncidentSerializer(reports,many=True)
@@ -793,15 +704,19 @@ class IncidentReport(APIView):
                 }
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class IncidentDetails(APIView):
+    def get(self, request, id, format=None):
+        contact = Incident.objects.all().filter(pk=id).last()
+        serializers = IncidentSerializer(contact,many=False)
+        return Response(serializers.data)
+
+    def delete(self, request, id, format=None):
+        contact = Incident.objects.all().filter(pk=id).last()
+        contact.delete()
+        return Response(status=status.HTTP_200_OK) 
     
 class ContactAdmin(APIView):
-    
-    def get_incident_reports(self):
-        try:
-            return Contact.objects.all()
-        except Contact.DoesNotExist:
-            return Http404
-
     def get(self, request, format=None):
         reports = Contact.objects.all()
         serializers = ContactSerializer(reports,many=True)
@@ -810,15 +725,16 @@ class ContactAdmin(APIView):
     def post(self, request,format=None):
         serializers = ContactSerializer(data=request.data)
         if serializers.is_valid():
-            # serializer.is_valid(raise_exception=True)
+            serializers.is_valid(raise_exception=True)
             contact_subject=serializers.validated_data['subject']
             contact_message=serializers.validated_data['message']
             your_name=serializers.validated_data['your_name']
             sender=serializers.validated_data['your_email']
             # date_and_time_reported=serializers.validated_data['date_and_time_reported']
+            
+            serializers.save()
             receiver='fullstack.benie@gmail.com'
             admin='Janja'
-            serializers.save()
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
             msg = "You have received a message on LogOnGo from " + str(your_name) + " of the email: " + str(sender) + ". Here is the message::</p> <br> <p>" + str(contact_message) + "</p> <br> <small> The contact team, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
@@ -845,7 +761,16 @@ class ContactAdmin(APIView):
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
     
+class ContactDetails(APIView):
+    def get(self, request, id, format=None):
+        contact = Contact.objects.all().filter(pk=id).last()
+        serializers = ContactSerializer(contact,many=False)
+        return Response(serializers.data)
 
+    def delete(self, request, id, format=None):
+        contact = Contact.objects.all().filter(pk=id).last()
+        contact.delete()
+        return Response(status=status.HTTP_200_OK) 
 
 class DeleteLogRequest(APIView):
     def post(self, request):
@@ -854,9 +779,9 @@ class DeleteLogRequest(APIView):
             log_id = request.data['log_id']
             date = request.data['date']
             date_requested = request.data['date_requested']
-            eod = request.data['eod_reading_lts']
-            eod_yesterday = request.data['eod_reading_yesterday']
-            litres_sold = request.data['litres_sold_today']
+            eod = request.data['eod_reading']
+            eod_yesterday = request.data['eod_yesterday']
+            litres_sold = request.data['litres_sold']
             amount = request.data['amount']
             logged_by = request.data['logged_by']
             receiver='fullstack.benie@gmail.com'
@@ -907,11 +832,11 @@ class DeleteMpesaRequest(APIView):
             log_id = request.data['log_id']
             date = request.data['date']
             date_requested = request.data['date_requested']
-            transaction = request.data['transaction_number']
-            bank = request.data['amount_transferred_to_bank']
+            transaction = request.data['transaction_no']
+            bank = request.data['to_bank']
             amount = request.data['amount']
-            customer_name = request.data['customer_name']
-            customer_no = request.data['customer_phone_number']
+            customer = request.data['customer']
+            customer_no = request.data['customer_no']
             logged_by = request.data['logged_by']
             requested_by = request.data['requested_by']
             serializer.save()
@@ -924,7 +849,7 @@ class DeleteMpesaRequest(APIView):
                 'transaction':transaction,
                 'bank':bank,
                 'amount':amount,
-                'customer_name':customer_name,
+                'customer':customer,
                 'customer_no':customer_no,
                 'username':username,
                 'logged_by':logged_by,
@@ -962,8 +887,6 @@ class DeleteCreditCardRequest(APIView):
             log_id = request.data['log_id']
             date = request.data['date']
             date_requested = request.data['date_requested']
-            card_name = request.data['card_name']
-            card_no = request.data['card_number']
             amount = request.data['amount']
             logged_by = request.data['logged_by']
             requested_by = request.data['requested_by']
@@ -974,8 +897,6 @@ class DeleteCreditCardRequest(APIView):
                 'log_id':log_id,
                 'date':date,
                 'date_requested':date_requested,
-                'card_name':card_name,
-                'card_no':card_no,
                 'amount':amount,
                 'username':username,
                 'logged_by':logged_by,
@@ -1006,3 +927,42 @@ class DeleteCreditCardRequest(APIView):
                 }
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LogSummary(APIView):
+    def get(self,request):
+        today = dt.date.today()
+        log = Log.objects.all().filter(date=today)
+        last = log.last()
+        if last:
+            last.amount_td = log.aggregate(TOTAL = Sum('amount_td'))['TOTAL']
+            last.save()
+            last.refresh_from_db()
+            serializers = ContactSerializer(log,many=False)
+            return Response(serializers.data)
+        return Response(status.HTTP_204_NO_CONTENT)
+
+class CardSummary(APIView):
+    def get(self,request):
+        today = dt.date.today()
+        log = LogCreditCard.objects.all().filter(date=today)
+        last = log.last()
+        if last:
+            last.amount = log.aggregate(TOTAL = Sum('amount'))['TOTAL']
+            last.save()
+            last.refresh_from_db()
+            serializers = ContactSerializer(log,many=False)
+            return Response(serializers.data)
+        return Response(status.HTTP_204_NO_CONTENT)
+
+class MpesaSummary(APIView):
+    def get(self,request):
+        today = dt.date.today()
+        log = LogMpesa.objects.all().filter(date=today)
+        last = log.last()
+        if last:
+            last.amount = log.aggregate(TOTAL = Sum('amount_td'))['TOTAL']
+            last.save()
+            last.refresh_from_db()
+            serializers = ContactSerializer(log,many=False)
+            return Response(serializers.data)
+        return Response(status.HTTP_204_NO_CONTENT)

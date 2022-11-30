@@ -99,6 +99,19 @@ class AllProfiles(APIView):
         serializers = UserProfileSerializer(profiles,many=True)
         return Response(serializers.data)
 
+class AllAdmins(APIView):
+    permission_classes = (AllowAny,)
+    def get_all_profiles(self):
+        try:
+            return MyUser.objects.all().filter(is_staff=True)
+        except MyUser.DoesNotExist:
+            return Http404
+
+    def get(self, request, format=None):
+        profiles = MyUser.objects.all().filter(is_staff=True)
+        serializers = UserSerializer(profiles,many=True)
+        return Response(serializers.data)
+
 class AllUserStations(APIView):
     def get_all_profiles(self):
         try:

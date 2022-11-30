@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from log_app.models import CreditCardReport, DeleteRequest, Fuel, FuelReceived, LogCreditCard, LogReport, LogSummary, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Pump, Site
+from log_app.models import CreditCardReport, DeleteRequest, Fuel, FuelReceived, LogCreditCard, LogReport, MpesaReport, MyUser, Announcement, Contact, Incident, Log, LogMpesa, Site 
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.validators import UniqueValidator
@@ -17,70 +17,60 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 
 
-class PumpSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Pump 
-        fields = ('id','pump_name','date','initial_litres_in_tank',)
-
 class FuelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fuel 
-        fields = ('id','fuel_type','price_per_litre','pumps','initial_litres_in_tank')
+        fields = ('id','fuel_type','pp_litre','tank_init')
+
+class FuelSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Log 
+        fields = ('id','fuel','cumulative_litres_td','cumulative_amount_td','cumulative_bal_td')
 
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log 
-        fields = ('id','fuel','date','formatted_date','eod_reading_lts','eod_reading_yesterday','total_litres_sold','amount_earned_today','balance','updated_balance','balance_yesterday','first_logged','last_edited','edited_by','user_id','logged_by',)
-
-class FuelSummarySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Log
-        fields = ('id','date','fuel','pump','cumulative_litres_sold_today','cumulative_amount_today','cumulative_balance_today')
+        fields = ('id','fuel','fuel_type','pp_litre','date','long_date','eod_reading','eod_yesterday','litres_sold','amount_td','bal','updated_bal','bal_yesterday','first_logged','last_edited','edited_by','user','logged_by','cumulative_litres_td','cumulative_amount_td','cumulative_bal_td')
 
 class PumpSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Log 
-        fields = ('id','date','fuel','pump','total_litres_sold','amount_earned_today','balance','updated_balance')
+        fields = ('id','date','fuel','litres_sold','amount_td','bal','updated_bal')
 
 class LogMpesaSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogMpesa 
-        fields = ('id','fuel','date','transaction_number','user','logged_by','customer_name','customer_phone_number','amount','amount_transferred_to_bank','daily_total','cumulative_amount','first_logged','last_edited','edited_by')
+        fields = ('id','fuel','fuel_type','pp_litre','date','long_date','transaction_no','user','logged_by','customer','customer_no','amount','to_bank','total_td','cumulative_amount','first_logged','last_edited','edited_by')
 
 class LogCreditCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogCreditCard
-        fields = ('id','fuel','date','card_name','card_number','amount','daily_total','cumulative_amount','site_name','user','logged_by','first_logged','last_edited','edited_by')
+        fields = ('id','fuel','date','long_date','fuel_type','pp_litre','card_name','card_no','amount','total_td','cumulative_amount','site_name','user','logged_by','first_logged','last_edited','edited_by')
 
 class FuelReceivedSerializer(serializers.ModelSerializer):
     class Meta:
         model = FuelReceived 
-        fields = ('id','litres_received','received_from','date_received','fuel',)
-    
-class TotalFuelReceivedSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FuelReceived
-        fields = ('date_received','fuel','total_fuel_received_today')
+        fields = ('id','litres','in_from','date','fuel','total_td')
 
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident  
-        fields = ('id','nature','description','reporter','your_name','your_email','incident_date','date_and_time_reported',)
+        fields = ('id','nature','description','reporter','your_name','your_email','incident_date','reported',)
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact  
-        fields = ('id','subject','message','your_email','your_name',)
+        fields = ('id','subject','date','message','your_email','your_name',)
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement  
-        fields = ('id','user_id','date','subject','announcement','announced_by',)
+        fields = ('id','user','date','subject','announcement','announced_by',)
 
 class LogReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogReport 
-        fields = ('id','user','date','eod_reading_lts','eod_reading_yesterday','litres_sold_today','amount_earned_today','balance','first_logged','last_edited','admin_name','admin_email','logged_by',)
+        fields = ('id','user','date','eod_reading','eod_yesterday','litres_sold','amount_td','bal','first_logged','last_edited','name','email','logged_by',)
 
     # def create(self, validated_data):
     #     user = LogReport.objects.create_report(**validated_data)
@@ -89,27 +79,27 @@ class LogReportSerializer(serializers.ModelSerializer):
 class MpesaReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = MpesaReport 
-        fields = ('id','date','transaction_number','customer_name','customer_phone_number','amount','amount_transferred_to_bank','daily_total','cumulative_amount','admin_name','admin_email','logged_by',)
+        fields = ('id','date','transaction_no','customer','customer_no','amount','to_bank','total_td','cumulative_amount','name','email','logged_by',)
 
 
 class CreditCardReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = CreditCardReport
-        fields = ('id','date','card_name','card_number','amount','daily_total','cumulative_amount','logged_by','admin_name','admin_email')    
+        fields = ('id','date','card_name','card_no','amount','total_td','cumulative_amount','logged_by','name','email')    
 
 class DeleteLogRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','eod_reading_lts','eod_reading_yesterday','litres_sold_today','amount_earned_today','logged_by','requested_by')
+        fields = ('id','log_id','date','date_requested','eod_reading','eod_yesterday','litres_sold','amount_td','logged_by','admin','admin_email','requested_by')
 
 class DeleteMpesaRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','transaction_number','amount','amount_transferred_to_bank','customer_name','customer_phone_number','logged_by','requested_by')
+        fields = ('id','log_id','date','date_requested','transaction_no','amount','to_bank','customer','customer_no','logged_by','admin','admin_email','requested_by')
 
 class DeleteCreditRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','card_name','card_number','amount','logged_by','admin_name','admin_email','requested_by')
+        fields = ('id','log_id','date','date_requested','card_name','card_no','amount','logged_by','admin','admin_email','requested_by')
 
 
