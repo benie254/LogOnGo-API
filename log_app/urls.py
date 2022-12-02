@@ -6,7 +6,7 @@ from knox import views as knox_views
 urlpatterns = [
     #auth & user URLS
     path('password/change/<int:pk>',auth_views.ChangePasswordView.as_view(),name='change-password'),
-    url(r'^password/reset/request/(\d+)$',auth_views.PasswordResetRequest.as_view(),name='reset-password-request'),
+    url(r'^password/reset/request/$',auth_views.PasswordResetRequest.as_view(),name='reset-password-request'),
     path('password/reset/confirmed/<int:pk>',auth_views.ResetPasswordView.as_view(),name='reset-password-confirmed'),
     path('password/reset/complete/<slug:uidb64>/<slug:token>/',auth_views.activate,name='reset-password-complete'),
     url(r'^auth/', include('knox.urls')),

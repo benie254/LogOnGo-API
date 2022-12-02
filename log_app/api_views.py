@@ -184,7 +184,7 @@ class LogsToday(APIView):
 
 class UserLogs(APIView):
     def get(self, request, user_id, format=None):
-        user_logs = Log.objects.all().filter(user_id_id=user_id).order_by('-date')
+        user_logs = Log.objects.all().filter(user_id=user_id).order_by('-date')
         serializers = LogSerializer(user_logs,many=True)
         return Response(serializers.data)
 
@@ -672,10 +672,10 @@ class IncidentReport(APIView):
             # serializer.is_valid(raise_exception=True)
             nature=serializers.validated_data['nature']
             description=serializers.validated_data['description']
-            username=serializers.validated_data['your_name']
+            username=serializers.validated_data['name']
             incident_date=serializers.validated_data['incident_date']
             # date_and_time_reported=serializers.validated_data['date_and_time_reported']
-            sender=serializers.validated_data['your_email']
+            sender=serializers.validated_data['email']
             receiver='fullstack.benie@gmail.com'
             admin='Janja'
             serializers.save()
@@ -728,8 +728,8 @@ class ContactAdmin(APIView):
             serializers.is_valid(raise_exception=True)
             contact_subject=serializers.validated_data['subject']
             contact_message=serializers.validated_data['message']
-            your_name=serializers.validated_data['your_name']
-            sender=serializers.validated_data['your_email']
+            name=serializers.validated_data['name']
+            sender=serializers.validated_data['email']
             # date_and_time_reported=serializers.validated_data['date_and_time_reported']
             
             serializers.save()
@@ -737,7 +737,7 @@ class ContactAdmin(APIView):
             admin='Janja'
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-            msg = "You have received a message on LogOnGo from " + str(your_name) + " of the email: " + str(sender) + ". Here is the message::</p> <br> <p>" + str(contact_message) + "</p> <br> <small> The contact team, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
+            msg = "You have received a message on LogOnGo from " + str(name) + " of the email: " + str(sender) + ". Here is the message::</p> <br> <p>" + str(contact_message) + "</p> <br> <small> The contact team, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
             message = Mail(
                 from_email = Email("davinci.monalissa@gmail.com"),
                 to_emails = receiver,
@@ -786,7 +786,7 @@ class DeleteLogRequest(APIView):
             logged_by = request.data['logged_by']
             receiver='fullstack.benie@gmail.com'
             username='Janja'
-            requested_by = request.data['requested_by']
+            user = request.data['user']
             serializer.save()
             myHtml = render_to_string('email/delete-log-request.html', {
                 'log_id':log_id,
@@ -798,7 +798,7 @@ class DeleteLogRequest(APIView):
                 'amount':amount,
                 'username':username,
                 'logged_by':logged_by,
-                'requested_by':requested_by,
+                'user':user,
             })
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
             message = Mail(
@@ -838,7 +838,7 @@ class DeleteMpesaRequest(APIView):
             customer = request.data['customer']
             customer_no = request.data['customer_no']
             logged_by = request.data['logged_by']
-            requested_by = request.data['requested_by']
+            user = request.data['user']
             serializer.save()
             receiver='fullstack.benie@gmail.com'
             username='Janja'
@@ -853,7 +853,7 @@ class DeleteMpesaRequest(APIView):
                 'customer_no':customer_no,
                 'username':username,
                 'logged_by':logged_by,
-                'requested_by':requested_by,
+                'user':user,
             })
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
             message = Mail(
@@ -889,7 +889,7 @@ class DeleteCreditCardRequest(APIView):
             date_requested = request.data['date_requested']
             amount = request.data['amount']
             logged_by = request.data['logged_by']
-            requested_by = request.data['requested_by']
+            user = request.data['user']
             serializer.save()
             receiver='fullstack.benie@gmail.com'
             username='Janja'
@@ -900,7 +900,7 @@ class DeleteCreditCardRequest(APIView):
                 'amount':amount,
                 'username':username,
                 'logged_by':logged_by,
-                'requested_by':requested_by,
+                'user':user,
             })
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
             message = Mail(

@@ -45,7 +45,7 @@ class LogMpesaSerializer(serializers.ModelSerializer):
 class LogCreditCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogCreditCard
-        fields = ('id','fuel','date','long_date','fuel_type','pp_litre','card_name','card_no','amount','total_td','cumulative_amount','site_name','user','logged_by','first_logged','last_edited','edited_by')
+        fields = ('id','fuel','date','long_date','fuel_type','pp_litre','card_name','card_no','amount','total_td','cumulative_amount','user','logged_by','first_logged','last_edited','edited_by')
 
 class FuelReceivedSerializer(serializers.ModelSerializer):
     class Meta:
@@ -55,12 +55,12 @@ class FuelReceivedSerializer(serializers.ModelSerializer):
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident  
-        fields = ('id','nature','description','reporter','your_name','your_email','incident_date','reported',)
+        fields = ('id','nature','description','reporter','name','email','incident_date','reported',)
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact  
-        fields = ('id','subject','date','message','your_email','your_name',)
+        fields = ('id','subject','date','message','email','name',)
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -90,16 +90,16 @@ class CreditCardReportSerializer(serializers.ModelSerializer):
 class DeleteLogRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','eod_reading','eod_yesterday','litres_sold','amount_td','logged_by','admin','admin_email','requested_by')
+        fields = ('id','log_id','date','date_requested','eod_reading','eod_yesterday','litres_sold','amount_td','logged_by','admin','admin_email','user')
 
 class DeleteMpesaRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','transaction_no','amount','to_bank','customer','customer_no','logged_by','admin','admin_email','requested_by')
+        fields = ('id','log_id','date','date_requested','transaction_no','amount','to_bank','customer','customer_no','logged_by','admin','admin_email','user')
 
 class DeleteCreditRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','card_name','card_no','amount','logged_by','admin','admin_email','requested_by')
+        fields = ('id','log_id','date','date_requested','card_name','card_no','amount','logged_by','admin','admin_email','user')
 
 

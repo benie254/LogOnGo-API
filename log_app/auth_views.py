@@ -310,13 +310,16 @@ class ChangePasswordView(generics.UpdateAPIView):
     serializer_class = ChangePasswordSerializer
 
 class PasswordResetRequest(APIView):
-    def post(self, request,id):
+    def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
             receiver = request.data['email']
             username = request.data['username']
+            user = MyUser.objects.filter(email=email,username=username).first()
+            if user is None:
+                raise AuthenticationFailed('User not found!')
+                
             serializer.save()
-            user = request.user 
             user_id = user.id
             current_site = get_current_site(request)
             myHtml = render_to_string('reset-pass.html', {
@@ -379,7 +382,8 @@ def activate(request, uidb64, token):
                 'success':successMsg,
             }
             # return response 
-            return redirect('http://localhost:4200//confirmed/reset-password/' + uid)
+            return redirect('http://localhost:4200/confirmed/password/reset' + uid)
+            # return redirect('https://logongo.web.app/confirmed/password/reset/' + uid)
         else:
             Http404
             print("failure")
