@@ -21,20 +21,20 @@ from django.template.loader import render_to_string
 
 # Create your views here.
 class LatestAnnouncements(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         announcement = Announcement.objects.all().order_by('-date')[:3]
         serializers = AnnouncementSerializer(announcement,many=True)
         return Response(serializers.data)
 
 class AllAnnouncements(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         announcement = Announcement.objects.all().order_by('-date')
         serializers = AnnouncementSerializer(announcement,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def post(self, request, format=None):
         serializers = AnnouncementSerializer(data=request.data)
         if serializers.is_valid(raise_exception=True):
@@ -43,13 +43,13 @@ class AllAnnouncements(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdateAnnouncement(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, id, format=None):
         announce = Announcement.objects.all().filter(pk=id).last()
         serializers = AnnouncementSerializer(announce,many=False)
         return Response(serializers.data)
     
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def put(self, request, id, format=None):
         announcement = Announcement.objects.all().filter(pk=id).last()
         serializers = AnnouncementSerializer(announcement,request.data)
@@ -58,20 +58,20 @@ class UpdateAnnouncement(APIView):
             return Response(serializers.data)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def delete(self, request, id, format=None):
         announcement = Announcement.objects.all().filter(pk=id).last()
         announcement.delete()
         return Response(status=status.HTTP_200_OK) 
 
 class AllFuels(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         fuuel_info = Fuel.objects.all().order_by('-pk')[:3]
         serializers = FuelSerializer(fuuel_info,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def post(self, request, format=None):
         serializers = FuelSerializer(data=request.data)
         if serializers.is_valid(raise_exception=True):
@@ -80,13 +80,13 @@ class AllFuels(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class FuelInfo(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, fuel_id, format=None):
         fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
         serializers = FuelSerializer(fuel_info,many=False)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def put(self, request, fuel_id, format=None):
         fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
         serializers = FuelSerializer(fuel_info,request.data)
@@ -96,42 +96,42 @@ class FuelInfo(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def delete(self, request, id, format=None):
         contact = Fuel.objects.all().filter(pk=id).last()
         contact.delete()
         return Response(status=status.HTTP_200_OK) 
 
 class PetrolInfo(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         fuel_info = Fuel.objects.all().filter(fuel_type='Petrol').last()
         serializers = FuelSerializer(fuel_info,many=False)
         return Response(serializers.data)
 
 class DieselInfo(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         fuel_info = Fuel.objects.all().filter(fuel_type='Diesel').last()
         serializers = FuelSerializer(fuel_info,many=False)
         return Response(serializers.data)
 
 class GasInfo(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         fuel_info = Fuel.objects.all().filter(fuel_type='Gas').last()
         serializers = FuelSerializer(fuel_info,many=False)
         return Response(serializers.data)
 
 class AllFuelReceivedToday(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         today = dt.date.today()
         fuel_received_today = FuelReceived.objects.all().filter(date=today)
         serializers = FuelReceivedSerializer(fuel_received_today,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request, format=None):
         serializers = FuelReceivedSerializer(data=request.data)
         if serializers.is_valid():
@@ -140,7 +140,7 @@ class AllFuelReceivedToday(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class FuelReceivedTodayInfo(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         fuel_rcvd = FuelReceived.objects.all().filter(date=today).filter(fuel_id=fuel_id)
@@ -154,13 +154,13 @@ class FuelReceivedTodayInfo(APIView):
         return Response(status.HTTP_204_NO_CONTENT)
 
 class FuelReceivedDetails(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, id, format=None):
-        fuel_received = FuelReceived.objects.all().filter(pk=id)
-        serializers = FuelReceivedSerializer(fuel_received,many=True)
+        fuel_received = FuelReceived.objects.all().filter(pk=id).first()
+        serializers = FuelReceivedSerializer(fuel_received,many=False)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def put(self, request, id, format=None):
         fuel_info = FuelReceived.objects.all().filter(pk=id).last()
         serializers = FuelReceivedSerializer(fuel_info,request.data)
@@ -170,14 +170,14 @@ class FuelReceivedDetails(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def delete(self, request, id, format=None):
         contact = Fuel.objects.all().filter(pk=id).last()
         contact.delete()
         return Response(status=status.HTTP_200_OK) 
 
 class TotalFuelReceivedToday(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         fuel_rcvd = FuelReceived.objects.all().filter(date=today).filter(fuel_id=fuel_id).last()
@@ -185,21 +185,21 @@ class TotalFuelReceivedToday(APIView):
         return Response(serializers.data)
 
 class AllLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         all_logs = Log.objects.all().order_by('-first_logged')
         serializers = LogSerializer(all_logs,many=True)
         return Response(serializers.data)
 
 class LogsToday(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         today = dt.date.today()
         today_logs = Log.objects.all().filter(date=today).order_by('-date')
         serializers = LogSerializer(today_logs,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request, format=None):
         serializers = LogSerializer(data=request.data)
         if serializers.is_valid(raise_exception=True):
@@ -208,14 +208,14 @@ class LogsToday(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, user_id, format=None):
         user_logs = Log.objects.all().filter(user_id=user_id).order_by('-date')
         serializers = LogSerializer(user_logs,many=True)
         return Response(serializers.data)
 
 class FuelLogsToday(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
@@ -265,7 +265,7 @@ class FuelLogsToday(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class FuelLogsYesterday(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         yesterday = today - dt.timedelta(days=1)
@@ -279,7 +279,7 @@ class FuelLogsYesterday(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
         
 class FuelSummaryToday(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         fuel_summary = Log.objects.all().filter(fuel_id=fuel_id).filter(date=today).last()
@@ -287,13 +287,13 @@ class FuelSummaryToday(APIView):
         return Response(serializers.data)
 
 class AllMpesaLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         all_mpesa_logs = LogMpesa.objects.all().order_by('-first_logged')
         serializers = LogMpesaSerializer(all_mpesa_logs,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request, format=None):
         serializers = LogMpesaSerializer(data=request.data)
         if serializers.is_valid():
@@ -302,7 +302,7 @@ class AllMpesaLogs(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MpesaLogsToday(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         today_mpesa_logs = LogMpesa.objects.all().filter(date=today).filter(fuel=fuel_id)
@@ -322,20 +322,20 @@ class MpesaLogsToday(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class UserMpesaLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, user_id, format=None):
         user_mpesa_logs = LogMpesa.objects.all().filter(user=user_id).order_by('-first_logged')
         serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
         return Response(serializers.data)
 
 class AllCreditCardLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         all_credit_card_logs = LogCreditCard.objects.all().order_by('-first_logged')
         serializers = LogCreditCardSerializer(all_credit_card_logs,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request, format=None):
         serializers = LogCreditCardSerializer(data=request.data)
         if serializers.is_valid():
@@ -344,7 +344,7 @@ class AllCreditCardLogs(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CreditCardLogsToday(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         last_credit_card_log = LogCreditCard.objects.all().filter(date=today).filter(fuel=fuel_id).last()
@@ -364,14 +364,14 @@ class CreditCardLogsToday(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class UserCreditCardLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, user_id, format=None):
         user_credit_card_logs = LogCreditCard.objects.all().filter(user=user_id).order_by('-first_logged')
         serializers = LogCreditCardSerializer(user_credit_card_logs,many=True)
         return Response(serializers.data)
 
 class LogDetails(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, log_id, format=None):
         log_details = Log.objects.all().filter(pk=log_id).first()
         serializers = LogSerializer(log_details,many=False)
@@ -419,7 +419,7 @@ class LogDetails(APIView):
             log_details.refresh_from_db()
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def put(self, request, log_id, format=None):
         log_details = Log.objects.all().filter(pk=log_id).first()
         serializers = LogSerializer(log_details,request.data)
@@ -429,29 +429,31 @@ class LogDetails(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def delete(self, request, id, format=None):
         contact = Log.objects.all().filter(pk=id).last()
         contact.delete()
         return Response(status=status.HTTP_200_OK) 
 
 class MpesaLogDetails(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, id, format=None):
         mpesa_details = LogMpesa.objects.all().filter(id=id).last()
-        mpesa_date = mpesa_details.date
-        mpesa_details.fuel_type = mpesa_details.fuel.fuel_type
-        mpesa_details.pp_litre = mpesa_details.fuel.pp_litre
-        mpesa_details.save()
-        mpesa_details.refresh_from_db()
-        mpesa_details.total_td = LogMpesa.objects.all().filter(date=mpesa_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
-        mpesa_details.cumulative_amount = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
-        mpesa_details.save()
-        mpesa_details.refresh_from_db()
-        serializers = LogMpesaSerializer(mpesa_details,many=False)
-        return Response(serializers.data)
+        if mpesa_details:
+            mpesa_date = mpesa_details.date
+            mpesa_details.fuel_type = mpesa_details.fuel.fuel_type
+            mpesa_details.pp_litre = mpesa_details.fuel.pp_litre
+            mpesa_details.save()
+            mpesa_details.refresh_from_db()
+            mpesa_details.total_td = LogMpesa.objects.all().filter(date=mpesa_date).aggregate(TOTAL = Sum('amount'))['TOTAL']
+            mpesa_details.cumulative_amount = LogMpesa.objects.all().aggregate(TOTAL = Sum('amount'))['TOTAL']
+            mpesa_details.save()
+            mpesa_details.refresh_from_db()
+            serializers = LogMpesaSerializer(mpesa_details,many=False)
+            return Response(serializers.data)
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def put(self, request, id, format=None):
         mpesa_details = LogMpesa.objects.all().filter(id=id).first()
         serializers = LogMpesaSerializer(mpesa_details,request.data)
@@ -461,14 +463,14 @@ class MpesaLogDetails(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def delete(self, request, id, format=None):
         contact = LogMpesa.objects.all().filter(pk=id).last()
         contact.delete()
         return Response(status=status.HTTP_200_OK) 
 
 class CreditCardLogDetails(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, id, format=None):
         credit_card_details = LogCreditCard.objects.all().filter(pk=id).last()
         if credit_card_details:
@@ -485,7 +487,7 @@ class CreditCardLogDetails(APIView):
             return Response(serializers.data)
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def put(self, request, id, format=None):
         credit_card_details = LogCreditCard.objects.all().filter(id=id).first()
         serializers = LogCreditCardSerializer(credit_card_details,request.data)
@@ -495,14 +497,14 @@ class CreditCardLogDetails(APIView):
         else:
             return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def delete(self, request, id, format=None):
         contact = LogCreditCard.objects.all().filter(pk=id).last()
         contact.delete()
         return Response(status=status.HTTP_200_OK) 
 
 class PastLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self,request,past_date):
         try:
         # convert data from the string url
@@ -524,7 +526,7 @@ class PastLogs(APIView):
         return Response(serializers.data)
 
 class PastMpesaLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self,request,past_date):
         try:
         # convert data from the string url
@@ -546,7 +548,7 @@ class PastMpesaLogs(APIView):
         return Response(serializers.data)
 
 class PastCreditCardLogs(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self,request,past_date):
         try:
         # convert data from the string url
@@ -568,13 +570,13 @@ class PastCreditCardLogs(APIView):
         return Response(serializers.data)
 
 class EmailReport(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         reports = LogReport.objects.all()
         serializers = LogSerializer(reports,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request,format=None):
         serializers = LogReportSerializer(data=request.data)
         if serializers.is_valid():
@@ -615,13 +617,13 @@ class EmailReport(APIView):
     
 
 class EmailMpesaReport(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         reports = MpesaReport.objects.all()
         serializers = MpesaReportSerializer(reports,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request,format=None):
         serializers = MpesaReportSerializer(data=request.data)
         if serializers.is_valid():
@@ -665,13 +667,13 @@ class EmailMpesaReport(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EmailCreditCardReport(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         reports = CreditCardReport.objects.all()
         serializers = CreditCardReportSerializer(reports,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request,format=None):
         serializers = CreditCardReportSerializer(data=request.data)
         if serializers.is_valid():
@@ -716,13 +718,13 @@ class EmailCreditCardReport(APIView):
 
 
 class IncidentReport(APIView):
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def get(self, request, format=None):
         reports = Incident.objects.all()
         serializers = IncidentSerializer(reports,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request,format=None):
         serializers = IncidentSerializer(data=request.data)
         if serializers.is_valid():
@@ -763,26 +765,26 @@ class IncidentReport(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class IncidentDetails(APIView):
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def get(self, request, id, format=None):
         contact = Incident.objects.all().filter(pk=id).last()
         serializers = IncidentSerializer(contact,many=False)
         return Response(serializers.data)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def delete(self, request, id, format=None):
         contact = Incident.objects.all().filter(pk=id).last()
         contact.delete()
         return Response(status=status.HTTP_200_OK) 
     
 class ContactAdmin(APIView):
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def get(self, request, format=None):
         reports = Contact.objects.all()
         serializers = ContactSerializer(reports,many=True)
         return Response(serializers.data)
 
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request,format=None):
         serializers = ContactSerializer(data=request.data)
         if serializers.is_valid():
@@ -823,20 +825,20 @@ class ContactAdmin(APIView):
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class ContactDetails(APIView):
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def get(self, request, id, format=None):
         contact = Contact.objects.all().filter(pk=id).last()
         serializers = ContactSerializer(contact,many=False)
         return Response(serializers.data)
 
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def delete(self, request, id, format=None):
         contact = Contact.objects.all().filter(pk=id).last()
         contact.delete()
         return Response(status=status.HTTP_200_OK) 
 
 class DeleteLogRequest(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request):
         serializer = DeleteLogRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -891,7 +893,7 @@ class DeleteLogRequest(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteMpesaRequest(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request):
         serializer = DeleteMpesaRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -948,7 +950,7 @@ class DeleteMpesaRequest(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteCreditCardRequest(APIView):
-    permission_classes = (IsAuthenticated,IsAdminUser)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def post(self, request):
         serializer = DeleteCreditRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -997,7 +999,7 @@ class DeleteCreditCardRequest(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LogSummary(APIView):
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def get(self,request):
         today = dt.date.today()
         log = Log.objects.all().filter(date=today)
@@ -1011,7 +1013,7 @@ class LogSummary(APIView):
         return Response(status.HTTP_204_NO_CONTENT)
 
 class CardSummary(APIView):
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def get(self,request):
         today = dt.date.today()
         log = LogCreditCard.objects.all().filter(date=today)
@@ -1025,7 +1027,7 @@ class CardSummary(APIView):
         return Response(status.HTTP_204_NO_CONTENT)
 
 class MpesaSummary(APIView):
-    permission_classes = (IsAdminUser)
+    permission_classes = (IsAdminUser,)
     def get(self,request):
         today = dt.date.today()
         log = LogMpesa.objects.all().filter(date=today)

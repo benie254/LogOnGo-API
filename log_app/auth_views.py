@@ -6,7 +6,7 @@ from log_app import auth_serializer
 from log_app.email import send_welcome_email
 from log_app.renderers import UserJSONRenderer
 from log_app.models import MyUser, Site, Profile
-from log_app.auth_serializer import ChangePasswordSerializer, PasswordResetRequestSerializer, PasswordResetSerializer, PetrolStationSerializer, UserProfileSerializer, UserSerializer
+from log_app.auth_serializer import ChangePasswordSerializer, PasswordResetRequestSerializer, PasswordResetSerializer, PetrolStationSerializer, UpdateSerializer, UserProfileSerializer, UserSerializer
 import jwt, datetime
 from rest_framework.generics import CreateAPIView
 from rest_framework import permissions
@@ -20,7 +20,7 @@ from decouple import config
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny,IsAuthenticated
+from rest_framework.permissions import AllowAny,IsAuthenticated, IsAdminUser
 from log_app.auth_serializer import UserLoginSerializer,UserRegistrationSerializer
 
 from rest_framework import generics
@@ -72,41 +72,53 @@ from django.utils.http import urlsafe_base64_encode
 
 from .tokens import account_activation_token
 # Create your views here.'
+
 class UserProfile(APIView):
-    def get_user_profiles(self,request):
+    def get_user_profiles(self,request, id):
         try:
             user_id = request.user.id
             return Profile.objects.all().filter(id=user_id)
         except Profile.DoesNotExist:
             return Http404
-
-    def get(self, request, format=None):
+    
+    permission_classes = (IsAdminUser,)
+    def get(self, request, id, format=None):
         user_id = request.user.id
         profiles = Profile.objects.all().filter(id=user_id)
         serializers = UserProfileSerializer(profiles,many=False)
 
         return Response(serializers.data)
+
+    permission_classes = (IsAdminUser,)
+    def put(self, request, id, format=None):
+        mpesa_details = MyUser.objects.all().filter(id=id).first()
+        serializers = UpdateSerializer(mpesa_details,request.data)
+        if serializers.is_valid():
+            serializers.save()
+            return Response(serializers.data)
+        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 class AllProfiles(APIView):
-    permission_classes = (AllowAny,)
     def get_all_profiles(self):
         try:
             return Profile.objects.all()
         except Profile.DoesNotExist:
             return Http404
 
+    permission_classes = (IsAdminUser,)
     def get(self, request, format=None):
         profiles = Profile.objects.all()
         serializers = UserProfileSerializer(profiles,many=True)
         return Response(serializers.data)
 
 class AllAdmins(APIView):
-    permission_classes = (AllowAny,)
     def get_all_profiles(self):
         try:
             return MyUser.objects.all().filter(is_staff=True)
         except MyUser.DoesNotExist:
             return Http404
 
+    permission_classes = (IsAdminUser,)
     def get(self, request, format=None):
         profiles = MyUser.objects.all().filter(is_staff=True)
         serializers = UserSerializer(profiles,many=True)
@@ -119,6 +131,7 @@ class AllUserStations(APIView):
         except Site.DoesNotExist:
             return Http404
 
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         stations = Site.objects.all()
         serializers = PetrolStationSerializer(stations,many=True)
@@ -131,55 +144,14 @@ class UserProfiles(APIView):
         except MyUser.DoesNotExist:
             return Http404
 
+    permission_classes = (IsAdminUser,)
     def get(self, request, format=None):
         user_profiles = MyUser.objects.all()
         serializers = UserSerializer(user_profiles,many=True)
         return Response(serializers.data)
 
 class RegisterView(APIView):
-    # renderer_classes = (UserJSONRenderer)
-    # serializer_class = UserRegistrationSerializer
     permission_classes = (AllowAny,)
-
-    # def post(self, request):
-    #     serializer = UserRegistrationSerializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     # username=serializer.validated_data['username']
-    #     # receiver=serializer.validated_data['email']
-    #     user = serializer.save()
-    #     user.refresh_from_db()
-    #     user.profile.first_name = serializer.validated_data['first_name']
-    #     user.profile.last_name = serializer.validated_data['last_name']
-    #     user.profile.username = serializer.validated_data['username']
-    #     user.profile.email = serializer.validated_data['email']
-    #     user.site.petrol_station = serializer.validated_data['petrol_station']
-    #         # user.is_active = False
-    #     user.save()
-    #     sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
-    #     # msg = "Nice to have you on board LogOnGo. Let's get to work!</p> <br> <small> The welcome committee, <br> LogOnGo. <br> ©Pebo Kenya Ltd  </small>"
-    #     # message = Mail(
-    #     #     from_email = Email("davinci.monalissa@gmail.com"),
-    #     #     to_emails = receiver,
-    #     #     subject = "You're in!",
-    #     #     html_content='<p>Hello, ' + str(username) + '! <br><br>' + msg
-    #     # )
-    #     # try:
-    #     #     sendgrid_client = sendgrid.SendGridAPIClient(config('SENDGRID_API_KEY'))
-    #     #     response = sendgrid_client.send(message)
-    #     #     print(response.status_code)
-    #     #     print(response.body)
-    #     #     print(response.headers)
-    #     # except Exception as e:
-    #     #     print(e)
-
-    #     status_code = status.HTTP_201_CREATED
-    #     response = {
-    #         'success' : 'True',
-    #         'status code' : status_code,
-    #         'message': 'User registered  successfully',
-    #         }
-        
-    #     return Response(response, status=status_code)
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -223,7 +195,6 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
-
     permission_classes = (AllowAny,)
     def post(self, request):
         email = request.data['email']
@@ -262,7 +233,6 @@ class LoginView(APIView):
         }
         return response 
 
-
 class UserView(APIView):
     # renderer_classes = (UserJSONRenderer)
     def get(self, request):
@@ -280,7 +250,6 @@ class UserView(APIView):
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
-
 class LogoutView(APIView):
     def post(self, request):
         response = Response()
@@ -290,26 +259,14 @@ class LogoutView(APIView):
         }
         return response
 
-class UsrProf(APIView):
-    def get_user_profiles(self):
-        try:
-            return Profile.objects.all()
-        except Profile.DoesNotExist:
-            return Http404
-
-    def get(self, request, format=None):
-        usr_profiles = Profile.objects.all()
-        serializers = UsrProf()
-        return Response(serializers.data)
-
-
 class ChangePasswordView(generics.UpdateAPIView):
 
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,IsAdminUser,)
     serializer_class = ChangePasswordSerializer
 
 class PasswordResetRequest(APIView):
+    permission_classes = (AllowAny,IsAdminUser,)
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -356,9 +313,6 @@ class PasswordResetRequest(APIView):
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# class PasswordReset(APIView):
-#     permission_classes = (AllowAny,)
-
 
 @api_view(('GET',))
 @renderer_classes((JSONRenderer,))
@@ -382,8 +336,8 @@ def activate(request, uidb64, token):
                 'success':successMsg,
             }
             # return response 
-            return redirect('http://localhost:4200/confirmed/password/reset' + uid)
-            # return redirect('https://logongo.web.app/confirmed/password/reset/' + uid)
+            return redirect('http://localhost:4200/auth/confirmed/password/reset' + uid)
+            # return redirect('https://log-on-go.web.app/auth/confirmed/password/reset/' + uid)
         else:
             Http404
             print("failure")
@@ -398,8 +352,13 @@ def activate(request, uidb64, token):
 
 class ResetPasswordView(generics.UpdateAPIView):
     queryset = User.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny,IsAdminUser)
     serializer_class = PasswordResetSerializer
+
+class UpdateUserView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (IsAdminUser,)
+    serializer_class = UpdateSerializer
         
         
 

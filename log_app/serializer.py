@@ -20,7 +20,7 @@ from django.contrib.auth.decorators import login_required
 class FuelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fuel 
-        fields = ('id','fuel_type','pp_litre','tank_init')
+        fields = ('id','fuel_type','pp_litre','tank_init','pumps')
 
 class FuelSummarySerializer(serializers.ModelSerializer):
     class Meta:

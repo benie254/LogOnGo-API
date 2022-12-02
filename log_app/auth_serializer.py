@@ -82,7 +82,12 @@ class UserLoginSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile 
-        fields = ('id','first_name','last_name','username','email','petrol_station')
+        fields = ('id','first_name','last_name','username','email','petrol_station','is_staff','is_superuser')
+
+class UpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MyUser 
+        fields = ('id','first_name','last_name','username','email','petrol_station','is_staff','is_superuser')
 
 class PetrolStationSerializer(serializers.ModelSerializer):
     class Meta:

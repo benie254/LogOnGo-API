@@ -260,13 +260,15 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
 
 # created upon successful registration
 class Profile(models.Model):
-    user = models.OneToOneField(MyUser, on_delete=models.CASCADE)
+    user = models.OneToOneField(MyUser, on_delete=models.CASCADE,blank=True,null=True)
     first_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
     username = models.CharField(max_length=100, blank=True)
     email = models.EmailField(max_length=150, blank=True)
     petrol_station = models.CharField(max_length=150,blank=True)
     signup_confirmation = models.BooleanField(default=False) 
+    is_staff = models.BooleanField(default=False) 
+    is_superuser = models.BooleanField(default=False) 
 
 @receiver(post_save, sender=MyUser)
 def update_profile_signal(sender, instance, created, **kwargs):
