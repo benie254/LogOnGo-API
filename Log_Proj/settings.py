@@ -125,6 +125,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://127.0.0.1:8000',
     'https://logongo.herokuapp.com',
     'https://log-on-go.web.app',
+    'https://logongo-staff.web.app',
 )
 
 MIDDLEWARE = [
