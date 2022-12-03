@@ -72,7 +72,7 @@ from django.utils.http import urlsafe_base64_encode
 
 from .tokens import account_activation_token
 # Create your views here.'
-
+@permission_classes([IsAdminUser,])
 class UserProfile(APIView):
     def get_user_profiles(self,request, id):
         try:
@@ -81,15 +81,12 @@ class UserProfile(APIView):
         except Profile.DoesNotExist:
             return Http404
     
-    permission_classes = (IsAdminUser,)
     def get(self, request, id, format=None):
         user_id = request.user.id
         profiles = Profile.objects.all().filter(id=user_id)
         serializers = UserProfileSerializer(profiles,many=False)
-
         return Response(serializers.data)
 
-    permission_classes = (IsAdminUser,)
     def put(self, request, id, format=None):
         mpesa_details = MyUser.objects.all().filter(id=id).first()
         serializers = UpdateSerializer(mpesa_details,request.data)
@@ -97,7 +94,8 @@ class UserProfile(APIView):
             serializers.save()
             return Response(serializers.data)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
+@permission_classes([IsAdminUser,])      
 class AllProfiles(APIView):
     def get_all_profiles(self):
         try:
@@ -105,12 +103,12 @@ class AllProfiles(APIView):
         except Profile.DoesNotExist:
             return Http404
 
-    permission_classes = (IsAdminUser,)
     def get(self, request, format=None):
         profiles = Profile.objects.all()
         serializers = UserProfileSerializer(profiles,many=True)
         return Response(serializers.data)
 
+@permission_classes([IsAdminUser,])
 class AllAdmins(APIView):
     def get_all_profiles(self):
         try:
@@ -118,12 +116,12 @@ class AllAdmins(APIView):
         except MyUser.DoesNotExist:
             return Http404
 
-    permission_classes = (IsAdminUser,)
     def get(self, request, format=None):
         profiles = MyUser.objects.all().filter(is_staff=True)
         serializers = UserSerializer(profiles,many=True)
         return Response(serializers.data)
 
+@permission_classes([IsAdminUser,])
 class AllUserStations(APIView):
     def get_all_profiles(self):
         try:
@@ -131,12 +129,12 @@ class AllUserStations(APIView):
         except Site.DoesNotExist:
             return Http404
 
-    permission_classes = (IsAuthenticated,IsAdminUser,)
     def get(self, request, format=None):
         stations = Site.objects.all()
         serializers = PetrolStationSerializer(stations,many=True)
         return Response(serializers.data)
 
+@permission_classes([IsAdminUser,])
 class UserProfiles(APIView):
     def get_all_users(self):
         try:
@@ -144,14 +142,13 @@ class UserProfiles(APIView):
         except MyUser.DoesNotExist:
             return Http404
 
-    permission_classes = (IsAdminUser,)
     def get(self, request, format=None):
         user_profiles = MyUser.objects.all()
         serializers = UserSerializer(user_profiles,many=True)
         return Response(serializers.data)
 
+@permission_classes([AllowAny,])
 class RegisterView(APIView):
-    permission_classes = (AllowAny,)
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -193,9 +190,8 @@ class RegisterView(APIView):
             }
         return Response(serializer.data)
 
-
+@permission_classes([AllowAny,])
 class LoginView(APIView):
-    permission_classes = (AllowAny,)
     def post(self, request):
         email = request.data['email']
         employee_id = request.data['employee_id']
@@ -233,6 +229,7 @@ class LoginView(APIView):
         }
         return response 
 
+@permission_classes([IsAuthenticated,])
 class UserView(APIView):
     # renderer_classes = (UserJSONRenderer)
     def get(self, request):
@@ -250,6 +247,7 @@ class UserView(APIView):
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
+@permission_classes([IsAuthenticated,])
 class LogoutView(APIView):
     def post(self, request):
         response = Response()
@@ -265,14 +263,14 @@ class ChangePasswordView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated,IsAdminUser,)
     serializer_class = ChangePasswordSerializer
 
+@permission_classes([AllowAny,])
 class PasswordResetRequest(APIView):
-    permission_classes = (AllowAny,IsAdminUser,)
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
             receiver = request.data['email']
             username = request.data['username']
-            user = MyUser.objects.filter(email=email,username=username).first()
+            user = MyUser.objects.filter(email=receiver,username=username).first()
             if user is None:
                 raise AuthenticationFailed('User not found!')
                 

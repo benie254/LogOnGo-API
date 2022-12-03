@@ -323,8 +323,10 @@ class MpesaLogsToday(APIView):
 class UserMpesaLogs(APIView):
     def get(self, request, user_id, format=None):
         user_mpesa_logs = LogMpesa.objects.all().filter(user=user_id).order_by('-first_logged')
-        serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
-        return Response(serializers.data)
+        if user_mpesa_logs:
+            serializers = LogMpesaSerializer(user_mpesa_logs,many=True)
+            return Response(serializers.data)
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 @permission_classes([IsAuthenticated,])
 class AllCreditCardLogs(APIView):
@@ -364,8 +366,10 @@ class CreditCardLogsToday(APIView):
 class UserCreditCardLogs(APIView):
     def get(self, request, user_id, format=None):
         user_credit_card_logs = LogCreditCard.objects.all().filter(user=user_id).order_by('-first_logged')
-        serializers = LogCreditCardSerializer(user_credit_card_logs,many=True)
-        return Response(serializers.data)
+        if user_credit_card_logs:
+            serializers = LogCreditCardSerializer(user_credit_card_logs,many=True)
+            return Response(serializers.data)
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 @permission_classes([IsAuthenticated,])
 class LogDetails(APIView):
