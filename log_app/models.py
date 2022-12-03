@@ -461,23 +461,11 @@ class DeleteRequest(models.Model):
     log_id = models.IntegerField(null=True,blank=True)
     date = models.CharField(max_length=120,blank=True,null=True)
     date_requested = models.CharField(max_length=120,default=timezone.now)
-    transaction_no = models.CharField(max_length=100,blank=True,null=True)
-    customer = models.CharField(max_length=120,blank=True,null=True)
-    customer_no = models.PositiveBigIntegerField(blank=True,null=True)
-    amount = models.PositiveBigIntegerField(blank=True,null=True)
-    to_bank = models.BigIntegerField(null=True,blank=True)
-    eod_reading = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
-    eod_yesterday = models.DecimalField(max_digits=19,decimal_places=2,null=True,blank=True)
-    litres_sold = models.DecimalField(max_digits=18,decimal_places=2,null=True,blank=True)
-    amount_td = models.PositiveBigIntegerField(null=True,blank=True)
-    bal = models.PositiveIntegerField(null=True,blank=True)
-    card_name = models.CharField(max_length=120,null=True,blank=True)
-    card_no = models.IntegerField(null=True,blank=True)
     logged_by = models.CharField(max_length=120,null=True,blank=True)
     user = models.CharField(max_length=120,null=True,blank=True)
     admin = models.CharField(max_length=120,null=True,blank=True)
     admin_email = models.EmailField(max_length=120,null=True,blank=True)
 
     def __int__(self):
-        return self.transaction_no
+        return self.date
     

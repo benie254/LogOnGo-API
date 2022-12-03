@@ -55,7 +55,7 @@ class FuelReceivedSerializer(serializers.ModelSerializer):
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident  
-        fields = ('id','nature','description','reporter','name','email','incident_date','reported',)
+        fields = ('id','nature','description','name','email','date','reported',)
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,7 +70,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 class LogReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogReport 
-        fields = ('id','user','date','eod_reading','eod_yesterday','litres_sold','amount_td','bal','first_logged','last_edited','name','email','logged_by',)
+        fields = ('id','date','eod_reading','eod_yesterday','litres_sold','amount_td','bal','first_logged','last_edited','name','email','logged_by',)
 
     # def create(self, validated_data):
     #     user = LogReport.objects.create_report(**validated_data)
@@ -90,16 +90,16 @@ class CreditCardReportSerializer(serializers.ModelSerializer):
 class DeleteLogRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','eod_reading','eod_yesterday','litres_sold','amount_td','logged_by','admin','admin_email','user')
+        fields = ('__all__')
 
 class DeleteMpesaRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','transaction_no','amount','to_bank','customer','customer_no','logged_by','admin','admin_email','user')
+        fields = ('__all__')
 
 class DeleteCreditRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeleteRequest
-        fields = ('id','log_id','date','date_requested','card_name','card_no','amount','logged_by','admin','admin_email','user')
+        fields = ('__all__')
 
 

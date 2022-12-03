@@ -207,9 +207,11 @@ class LogsToday(APIView):
 @permission_classes([IsAuthenticated,])
 class UserLogs(APIView):
     def get(self, request, user_id, format=None):
-        user_logs = Log.objects.all().filter(user_id=user_id).order_by('-date')
-        serializers = LogSerializer(user_logs,many=True)
-        return Response(serializers.data)
+        user_logs = Log.objects.all().filter(user=user_id).order_by('-first_logged')
+        if user_logs:
+            serializers = LogSerializer(user_logs,many=True)
+            return Response(serializers.data)
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 @permission_classes([IsAuthenticated,])
 class FuelLogsToday(APIView):
@@ -231,9 +233,10 @@ class FuelLogsToday(APIView):
                 logs.refresh_from_db()   
                 date = logs.date  
                 fuel_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=date).aggregate(TOTAL = Sum('litres'))['TOTAL']
-                if logs.bal and fuel_received:
+                fuel_td = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=date).last()
+                if logs.bal and fuel_td:
                     bal = logs.bal
-                    received = fuel_received.litres
+                    received = fuel_td.litres
                     init_bal = bal
                     logs.updated_bal = (init_bal) + (received)
                     logs.save()
@@ -266,22 +269,21 @@ class FuelLogsYesterday(APIView):
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         yesterday = today - dt.timedelta(days=1)
-        fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
-        if fuel_info:
-            logs = Log.objects.all().filter(date=yesterday).filter(fuel_id=fuel_id)
-            if logs:
-                serializers = LogSerializer(logs,many=True)
-                return Response(serializers.data)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        logs = Log.objects.all().filter(date=yesterday).filter(fuel_id=fuel_id).last()
+        if logs:
+            serializers = LogSerializer(logs,many=False)
+            return Response(serializers.data)
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 @permission_classes([IsAuthenticated,])     
 class FuelSummaryToday(APIView):
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
         fuel_summary = Log.objects.all().filter(fuel_id=fuel_id).filter(date=today).last()
-        serializers = FuelSummarySerializer(fuel_summary,many=False)
-        return Response(serializers.data)
+        if fuel_summary:
+            serializers = FuelSummarySerializer(fuel_summary,many=False)
+            return Response(serializers.data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 @permission_classes([IsAuthenticated,])
 class AllMpesaLogs(APIView):
@@ -580,8 +582,8 @@ class EmailReport(APIView):
             litres_sold=serializers.validated_data['litres_sold']
             amount_td=serializers.validated_data['amount_td']
             bal=serializers.validated_data['bal']
-            username=serializers.validated_data['admin']
-            receiver=serializers.validated_data['admin_email']
+            username=serializers.validated_data['name']
+            receiver=serializers.validated_data['email']
             serializers.save()
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
@@ -629,8 +631,8 @@ class EmailMpesaReport(APIView):
             total_td=serializers.validated_data['total_td']
             cumulative_amount=serializers.validated_data['cumulative_amount']
             logged_by=serializers.validated_data['logged_by']
-            username=serializers.validated_data['admin']
-            receiver=serializers.validated_data['admin_email']
+            username=serializers.validated_data['name']
+            receiver=serializers.validated_data['email']
             serializers.save()
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
@@ -678,8 +680,8 @@ class EmailCreditCardReport(APIView):
             cumulative_amount=serializers.validated_data['cumulative_amount']
             
             logged_by=serializers.validated_data['logged_by']
-            username=serializers.validated_data['admin']
-            receiver=serializers.validated_data['admin_email']
+            username=serializers.validated_data['name']
+            receiver=serializers.validated_data['email']
             serializers.save()
             
             sg = sendgrid.SendGridAPIClient(api_key=config('SENDGRID_API_KEY'))
@@ -721,7 +723,7 @@ class IncidentReport(APIView):
             nature=serializers.validated_data['nature']
             description=serializers.validated_data['description']
             username=serializers.validated_data['name']
-            incident_date=serializers.validated_data['incident_date']
+            incident_date=serializers.validated_data['date']
             # date_and_time_reported=serializers.validated_data['date_and_time_reported']
             sender=serializers.validated_data['email']
             receiver='fullstack.benie@gmail.com'
@@ -778,6 +780,7 @@ class ContactAdmin(APIView):
         serializers = ContactSerializer(data=request.data)
         if serializers.is_valid():
             serializers.is_valid(raise_exception=True)
+            date=serializers.validated_data['date']
             contact_subject=serializers.validated_data['subject']
             contact_message=serializers.validated_data['message']
             name=serializers.validated_data['name']
@@ -833,10 +836,6 @@ class DeleteLogRequest(APIView):
             log_id = request.data['log_id']
             date = request.data['date']
             date_requested = request.data['date_requested']
-            eod = request.data['eod_reading']
-            eod_yesterday = request.data['eod_yesterday']
-            litres_sold = request.data['litres_sold']
-            amount = request.data['amount']
             logged_by = request.data['logged_by']
             receiver='fullstack.benie@gmail.com'
             username='Janja'
@@ -846,10 +845,6 @@ class DeleteLogRequest(APIView):
                 'log_id':log_id,
                 'date':date,
                 'date_requested':date_requested,
-                'eod':eod,
-                'eod_yesterday':eod_yesterday,
-                'litres_sold':litres_sold,
-                'amount':amount,
                 'username':username,
                 'logged_by':logged_by,
                 'user':user,
@@ -888,11 +883,6 @@ class DeleteMpesaRequest(APIView):
             log_id = request.data['log_id']
             date = request.data['date']
             date_requested = request.data['date_requested']
-            transaction = request.data['transaction_no']
-            bank = request.data['to_bank']
-            amount = request.data['amount']
-            customer = request.data['customer']
-            customer_no = request.data['customer_no']
             logged_by = request.data['logged_by']
             user = request.data['user']
             serializer.save()
@@ -902,11 +892,6 @@ class DeleteMpesaRequest(APIView):
                 'log_id':log_id,
                 'date':date,
                 'date_requested':date_requested,
-                'transaction':transaction,
-                'bank':bank,
-                'amount':amount,
-                'customer':customer,
-                'customer_no':customer_no,
                 'username':username,
                 'logged_by':logged_by,
                 'user':user,
@@ -945,7 +930,6 @@ class DeleteCreditCardRequest(APIView):
             log_id = request.data['log_id']
             date = request.data['date']
             date_requested = request.data['date_requested']
-            amount = request.data['amount']
             logged_by = request.data['logged_by']
             user = request.data['user']
             serializer.save()
@@ -955,7 +939,6 @@ class DeleteCreditCardRequest(APIView):
                 'log_id':log_id,
                 'date':date,
                 'date_requested':date_requested,
-                'amount':amount,
                 'username':username,
                 'logged_by':logged_by,
                 'user':user,
