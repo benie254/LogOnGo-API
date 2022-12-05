@@ -126,6 +126,7 @@ CORS_ORIGIN_WHITELIST = (
     'https://logongo.herokuapp.com',
     'https://log-on-go.web.app',
     'https://logongo-staff.web.app',
+    'https://logongo-api-production.up.railway.app',
 )
 
 MIDDLEWARE = [
