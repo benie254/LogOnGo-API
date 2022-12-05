@@ -217,20 +217,30 @@ class UserLogs(APIView):
 class FuelLogsToday(APIView):
     def get(self, request, fuel_id, format=None):
         today = dt.date.today()
+        yesterday = today - dt.timedelta(days=1)
         fuel_info = Fuel.objects.all().filter(pk=fuel_id).last()
         if fuel_info:
             pp_litre = fuel_info.pp_litre
             logs = Log.objects.all().filter(date=today).filter(fuel_id=fuel_id).last()
             logs_today = Log.objects.all().filter(date=today).filter(fuel_id=fuel_id)
+            logs_yesterday = Log.objects.all().filter(date=yesterday).filter(fuel_id=fuel_id).last()
             if logs:
                 serializers = LogSerializer(logs_today,many=True)
                 logs.litres_sold = ExpressionWrapper(F('eod_reading') - F('eod_yesterday'),output_field=DecimalField())
                 logs.save()
                 logs.refresh_from_db()
-                logs.bal = ExpressionWrapper(F('bal_yesterday') - F('litres_sold'),output_field=DecimalField())
                 logs.amount_td = ExpressionWrapper(F('litres_sold') * (pp_litre),output_field=PositiveIntegerField())
                 logs.save()
                 logs.refresh_from_db()   
+                if logs_yesterday:
+                    logs.bal = ExpressionWrapper(F('bal_yesterday') - F('litres_sold'),output_field=DecimalField())
+                    logs.save()
+                    logs.refresh_from_db()  
+                else:
+                    tank_init = logs.fuel.tank_init
+                    logs.bal = ExpressionWrapper((tank_init) - ('litres_sold'),output_field=PositiveIntegerField())
+                    logs.save()
+                    logs.refresh_from_db()  
                 date = logs.date  
                 fuel_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=date).aggregate(TOTAL = Sum('litres'))['TOTAL']
                 fuel_td = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=date).last()
@@ -383,10 +393,22 @@ class LogDetails(APIView):
         log_details.litres_sold = ExpressionWrapper(F('eod_reading') - F('eod_yesterday'),output_field=DecimalField())
         log_details.save()
         log_details.refresh_from_db()
-        log_details.bal = ExpressionWrapper(F('bal_yesterday') - F('litres_sold'),output_field=DecimalField())
         log_details.amount_td = ExpressionWrapper(F('litres_sold') * F('pp_litre'),output_field=PositiveIntegerField())
         log_details.save()
-        log_details.refresh_from_db()   
+        log_details.refresh_from_db() 
+        log_date = log_details.date 
+        yesterday = log_date - dt.timedelta(days=1)
+        f_id = log_details.fuel.id
+        logs_yesterday = Log.objects.all().filter(date=yesterday).filter(fuel=f_id).last()
+        if logs_yesterday:
+            log_details.bal = ExpressionWrapper(F('bal_yesterday') - F('litres_sold'),output_field=DecimalField())
+            log_details.save()
+            log_details.refresh_from_db()  
+        else:
+            tank_init = log_details.fuel.tank_init
+            log_details.bal = ExpressionWrapper((tank_init) - ('litres_sold'),output_field=PositiveIntegerField())
+            log_details.save()
+            log_details.refresh_from_db()    
         date = log_details.date  
         fuel_id = log_details.fuel
         fuel_received = FuelReceived.objects.all().filter(fuel_id=fuel_id).filter(date=date).aggregate(TOTAL = Sum('litres'))['TOTAL']
