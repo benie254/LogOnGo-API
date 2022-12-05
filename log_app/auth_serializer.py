@@ -19,7 +19,7 @@ JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ['id', 'employee_id', 'username', 'email', 'first_name', 'last_name', 'petrol_station', 'password']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'petrol_station', 'password']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
 class MyUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile 
-        fields = ('first_name', 'last_name', 'username', 'petrol_station', 'employee_id')
+        fields = ('first_name', 'last_name', 'username', 'petrol_station',)
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
 
@@ -51,16 +51,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 class UserLoginSerializer(serializers.Serializer):
-    employee_id = serializers.IntegerField()
     email = serializers.CharField(max_length=255)
     password = serializers.CharField(max_length=128, write_only=True)
     token = serializers.CharField(max_length=255, read_only=True)
 
     def validate(self, data):
         email = data.get("email")
-        employee_id = data.get("employee_id")
         password = data.get("password")
-        user = authenticate(email=email, employee_id=employee_id, password=password)
+        user = authenticate(email=email, password=password)
         if user is None:
             raise serializers.ValidationError(
                 'A user with this email and password is not found.'

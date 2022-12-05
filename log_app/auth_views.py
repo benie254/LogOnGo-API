@@ -194,10 +194,9 @@ class RegisterView(APIView):
 class LoginView(APIView):
     def post(self, request):
         email = request.data['email']
-        employee_id = request.data['employee_id']
         password = request.data['password']
 
-        user = MyUser.objects.filter(email=email,employee_id=employee_id).first()
+        user = MyUser.objects.filter(email=email).first()
 
         if user is None:
             raise AuthenticationFailed('User not found!')
