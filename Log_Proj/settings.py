@@ -39,11 +39,15 @@ if os.getenv('MODE')=="dev":
 #prod
 else:
     DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3',
-    }
+            'default': dj_database_url.config(
+           default=config('DATABASE_URL')
+       )
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': 'db.sqlite3',
+    # }
 }
+
 
 
 db_from_env = dj_database_url.config(conn_max_age=500)
