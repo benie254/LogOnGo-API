@@ -240,7 +240,7 @@ class FuelLogsToday(APIView):
                     logs.tank_init = logs.fuel.tank_init
                     logs.save()
                     logs.refresh_from_db()  
-                    logs.bal = ExpressionWrapper(F('tank_init') - ('litres_sold'),output_field=DecimalField())
+                    logs.bal = ExpressionWrapper(F('tank_init') - F('litres_sold'),output_field=DecimalField())
                     logs.save()
                     logs.refresh_from_db()  
                 date = logs.date  
@@ -403,6 +403,9 @@ class LogDetails(APIView):
         f_id = log_details.fuel.id
         logs_yesterday = Log.objects.all().filter(date=yesterday).filter(fuel=f_id).last()
         if logs_yesterday:
+            log_details.bal_yesterday = logs_yesterday.bal
+            log_details.save()
+            log_details.refresh_from_db()  
             log_details.bal = ExpressionWrapper(F('bal_yesterday') - F('litres_sold'),output_field=DecimalField())
             log_details.save()
             log_details.refresh_from_db()  
@@ -410,7 +413,7 @@ class LogDetails(APIView):
             log_details.tank_init = log_details.fuel.tank_init
             log_details.save()
             log_details.refresh_from_db()  
-            log_details.bal = ExpressionWrapper(F('tank_init') - ('litres_sold'),output_field=DecimalField())
+            log_details.bal = ExpressionWrapper(F('tank_init') - F('litres_sold'),output_field=DecimalField())
             log_details.save()
             log_details.refresh_from_db()    
         date = log_details.date  

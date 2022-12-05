@@ -30,7 +30,7 @@ class FuelSummarySerializer(serializers.ModelSerializer):
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log 
-        fields = ('id','fuel','fuel_type','pp_litre','date','long_date','eod_reading','eod_yesterday','litres_sold','amount_td','bal','updated_bal','bal_yesterday','first_logged','last_edited','edited_by','user','logged_by','cumulative_litres_td','cumulative_amount_td','cumulative_bal_td')
+        fields = ('id','fuel','fuel_type','pp_litre','tank_init','date','long_date','eod_reading','eod_yesterday','litres_sold','amount_td','bal','updated_bal','bal_yesterday','first_logged','last_edited','edited_by','user','logged_by','cumulative_litres_td','cumulative_amount_td','cumulative_bal_td')
 
 class PumpSummarySerializer(serializers.ModelSerializer):
     class Meta:
