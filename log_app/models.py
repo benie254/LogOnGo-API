@@ -293,6 +293,7 @@ class Log(models.Model):
     fuel = models.ForeignKey(Fuel,on_delete=models.CASCADE,null=True,blank=True)
     fuel_type = models.CharField(max_length=60,null=True,blank=True)
     pp_litre = models.DecimalField(max_digits=5,decimal_places=2,null=True,blank=True)
+    tank_init = models.DecimalField(max_digits=8,decimal_places=2,default=0.00)
     date = models.DateField(default=timezone.now)
     long_date = models.CharField(max_length=200,null=True,blank=True)
     eod_reading = models.DecimalField(max_digits=19,decimal_places=2,default=0.00)
