@@ -237,6 +237,9 @@ class FuelLogsToday(APIView):
                     logs.save()
                     logs.refresh_from_db()  
                 else:
+                    logs.tank_init = logs.fuel.tank_init
+                    logs.save()
+                    logs.refresh_from_db()  
                     logs.bal = ExpressionWrapper(F('tank_init') - ('litres_sold'),output_field=DecimalField())
                     logs.save()
                     logs.refresh_from_db()  
@@ -404,7 +407,9 @@ class LogDetails(APIView):
             log_details.save()
             log_details.refresh_from_db()  
         else:
-            tank_init = log_details.fuel.tank_init
+            log_details.tank_init = log_details.fuel.tank_init
+            log_details.save()
+            log_details.refresh_from_db()  
             log_details.bal = ExpressionWrapper(F('tank_init') - ('litres_sold'),output_field=DecimalField())
             log_details.save()
             log_details.refresh_from_db()    
